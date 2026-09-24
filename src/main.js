@@ -127,80 +127,31 @@ class App {
     }
   }
 
-  // Step 1: Initial Nickname / Auth Entry
+  // Step 1: Initial Nickname Entry (Guest Mode)
   initAuthModal() {
+    const usernameInput = document.getElementById('auth-username');
+
     this.hudPlayerBadge?.addEventListener('click', () => {
       this.authModal?.classList.remove('hidden');
       this.isPausedForModal = true;
-    });
-
-    let currentTab = 'guest';
-    const tabBtns = document.querySelectorAll('.auth-tab-btn');
-    const pwdGroup = document.getElementById('group-password');
-    const submitBtn = document.getElementById('btn-auth-submit');
-    const usernameInput = document.getElementById('auth-username');
-    const passwordInput = document.getElementById('auth-password');
-
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTab = btn.dataset.tab;
-
-        if (this.authMsgEl) this.authMsgEl.classList.add('hidden');
-
-        if (currentTab === 'guest') {
-          if (pwdGroup) pwdGroup.style.display = 'none';
-          if (submitBtn) submitBtn.textContent = '確定並進入料理手冊 ➔';
-          if (usernameInput) usernameInput.placeholder = '請輸入大廚暱稱 (例如: 玉兔大廚)';
-          if (passwordInput) passwordInput.required = false;
-        } else if (currentTab === 'register') {
-          if (pwdGroup) pwdGroup.style.display = 'flex';
-          if (submitBtn) submitBtn.textContent = '註冊並進入料理手冊 ➔';
-          if (usernameInput) usernameInput.placeholder = '請輸入 2~12 字大廚名稱';
-          if (passwordInput) passwordInput.required = true;
-        } else {
-          if (pwdGroup) pwdGroup.style.display = 'flex';
-          if (submitBtn) submitBtn.textContent = '登入並進入料理手冊 ➔';
-          if (usernameInput) usernameInput.placeholder = '請輸入帳號 / 暱稱';
-          if (passwordInput) passwordInput.required = true;
-        }
-      });
+      usernameInput?.focus();
     });
 
     this.authForm?.addEventListener('submit', (e) => {
       e.preventDefault();
       const u = usernameInput?.value.trim() || '玉兔大廚';
-      const p = passwordInput?.value || '';
-      let res;
+      this.p1Name = u;
+      this.authManager.loginGuest(u);
 
-      if (currentTab === 'guest') {
-        res = this.authManager.loginGuest(u);
-      } else if (currentTab === 'register') {
-        res = this.authManager.register(u, p);
-      } else {
-        res = this.authManager.login(u, p);
-      }
+      if (this.hudPlayerNameEl) this.hudPlayerNameEl.textContent = this.p1Name;
+      if (this.p1SummaryName) this.p1SummaryName.textContent = this.p1Name;
 
-      if (res.success) {
-        this.p1Name = res.user.username || '玉兔大廚';
-        if (this.hudPlayerNameEl) this.hudPlayerNameEl.textContent = this.p1Name;
-        if (this.p1SummaryName) this.p1SummaryName.textContent = this.p1Name;
+      this.gameWorld.soundManager.playOrderSuccess();
+      this.authModal?.classList.add('hidden');
 
-        this.gameWorld.soundManager.playOrderSuccess();
-        this.authModal?.classList.add('hidden');
-
-        // Proceed to Step 2: Tutorial & Mode Selection
-        this.tutorialModal?.classList.remove('hidden');
-        this.isPausedForModal = true;
-      } else {
-        if (this.authMsgEl) {
-          this.authMsgEl.textContent = res.message;
-          this.authMsgEl.className = 'auth-msg';
-          this.authMsgEl.classList.remove('hidden');
-        }
-        this.gameWorld.soundManager.playBuzzer();
-      }
+      // Proceed to Step 2: Tutorial & Mode Selection
+      this.tutorialModal?.classList.remove('hidden');
+      this.isPausedForModal = true;
     });
   }
 

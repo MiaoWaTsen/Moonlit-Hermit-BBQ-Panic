@@ -90,7 +90,7 @@
       <div class="key-hint mode-indicator" id="game-mode-indicator">1P 單人修練模式</div>
     </footer>
 
-    <!-- 1. Player Auth / Nickname Modal (First Step on site entry) -->
+    <!-- 1. Player Nickname Modal (First Step on site entry) -->
     <div id="auth-modal" class="modal-backdrop">
       <div class="modal-card auth-card glass-panel">
         <div class="modal-header">
@@ -100,22 +100,15 @@
           </div>
         </div>
         <div class="modal-body auth-body">
-          <div class="auth-tabs">
-            <button class="auth-tab-btn active" data-tab="guest">訪客快速玩</button>
-            <button class="auth-tab-btn" data-tab="login">大廚登入</button>
-            <button class="auth-tab-btn" data-tab="register">新廚註冊</button>
+          <div class="p2-intro-box">
+            <p>🍢 歡迎來到月宮烤肉大廚房！</p>
+            <p>請輸入您的 1P 大廚暱稱以開始修練：</p>
           </div>
-
           <form id="auth-form" class="auth-form">
             <div class="form-group" id="group-username">
-              <label for="auth-username">大廚暱稱 / 帳號</label>
-              <input type="text" id="auth-username" placeholder="請輸入大廚暱稱 (例如: 玉兔大廚)" value="玉兔大廚" required autocomplete="username">
+              <label for="auth-username">1P 大廚暱稱 (玉兔)</label>
+              <input type="text" id="auth-username" placeholder="請輸入大廚暱稱 (例如: 玉兔大廚)" value="玉兔大廚" required autocomplete="username" autofocus>
             </div>
-            <div class="form-group" id="group-password" style="display: none;">
-              <label for="auth-password">密碼</label>
-              <input type="password" id="auth-password" placeholder="請輸入至少 4 碼密碼" autocomplete="current-password">
-            </div>
-            <div id="auth-msg" class="auth-msg hidden"></div>
             <button type="submit" id="btn-auth-submit" class="btn-primary full-btn">確定並進入料理手冊 ➔</button>
           </form>
         </div>
