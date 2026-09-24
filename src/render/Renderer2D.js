@@ -104,12 +104,12 @@ export class Renderer2D {
         const type = mapGrid.getTileType(x, y);
         const item = mapGrid.getItemAt(x, y);
 
-        if (type === TILE_TYPES.FLOOR || type === TILE_TYPES.WALL) continue;
+        // Draw Station Base if it's a station
+        if (type !== TILE_TYPES.FLOOR && type !== TILE_TYPES.WALL) {
+          this.drawStationBase(ctx, px, py, type);
+        }
 
-        // Draw Station Counter Base
-        this.drawStationBase(ctx, px, py, type);
-
-        // Draw item placed on counter
+        // Draw item placed on ANY counter or dropped on floor
         if (item) {
           this.drawItem(ctx, px + TILE_SIZE / 2, py + TILE_SIZE / 2, item, 0.9);
         }

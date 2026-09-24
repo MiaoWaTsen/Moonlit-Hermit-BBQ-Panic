@@ -448,3 +448,248 @@ html, body {
   font-size: 0.7rem;
   font-weight: 700;
 }
+
+/* =========================================
+   Modal Dialogs & Cookbook Guide Styles
+   ========================================= */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 15, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modal-backdrop.hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 760px;
+  max-height: 90vh;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.2);
+  border: 1.5px solid rgba(255, 215, 0, 0.4);
+  animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: rgba(255, 215, 0, 0.08);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-title h2 {
+  font-family: var(--font-title);
+  color: var(--gold-bright);
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+}
+
+.modal-title small {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: #a8bedd;
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+.modal-icon {
+  font-size: 1.4rem;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #9bb0d3;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #ffffff;
+}
+
+.modal-body {
+  padding: 18px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Steps Grid */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.step-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.step-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.step-card.highlight-step {
+  background: rgba(255, 215, 0, 0.08);
+  border-color: rgba(255, 215, 0, 0.35);
+}
+
+.step-num {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--gold-bright);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.step-icon {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+
+.step-card h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.step-card p {
+  font-size: 0.75rem;
+  color: #9bb0d3;
+  line-height: 1.35;
+}
+
+/* Recipes Grid */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.recipe-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recipe-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.recipe-formula {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ing-tag {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.plus {
+  color: var(--gold-bright);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #f5b041, #e67e22);
+  color: #111;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(245, 176, 65, 0.4);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(245, 176, 65, 0.6);
+  background: linear-gradient(135deg, #ffd700, #f39c12);
+}
+

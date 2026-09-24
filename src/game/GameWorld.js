@@ -180,8 +180,8 @@ export class GameWorld {
           return;
         }
 
-        // Place on empty Counter / Cutting Board / Grill / Sink
-        if (tileType === TILE_TYPES.COUNTER || tileType === TILE_TYPES.CUTTING_BOARD || tileType === TILE_TYPES.GRILL || tileType === TILE_TYPES.SINK) {
+        // Place on empty Counter / Cutting Board / Grill / Sink / Floor
+        if (tileType === TILE_TYPES.COUNTER || tileType === TILE_TYPES.CUTTING_BOARD || tileType === TILE_TYPES.GRILL || tileType === TILE_TYPES.SINK || tileType === TILE_TYPES.FLOOR) {
           if (!itemOnCounter) {
             if (tileType === TILE_TYPES.GRILL && this.player1.heldItem.isChoppable()) {
               // Raw meat/veggie must be chopped before grilling
@@ -194,7 +194,7 @@ export class GameWorld {
             this.player1.heldItem = null;
             return;
           } else {
-            // Food assembly onto Plate on Counter
+            // Food assembly onto Plate on Counter / Floor
             if (itemOnCounter.isPlate() && this.player1.heldItem.isFood()) {
               if (itemOnCounter.addIngredient(this.player1.heldItem)) {
                 this.soundManager.playPickup();
@@ -203,7 +203,7 @@ export class GameWorld {
                 return;
               }
             }
-            // Plate picking up food from Counter
+            // Plate picking up food from Counter / Floor
             if (this.player1.heldItem.isPlate() && itemOnCounter.isFood()) {
               if (this.player1.heldItem.addIngredient(itemOnCounter)) {
                 this.soundManager.playPickup();
@@ -234,7 +234,7 @@ export class GameWorld {
           return;
         }
 
-        // Pick item from Counter / Cutting board / Grill / Sink
+        // Pick item from Counter / Cutting board / Grill / Sink / Floor
         if (itemOnCounter) {
           this.player1.heldItem = itemOnCounter;
           this.soundManager.playPickup();
@@ -293,7 +293,6 @@ export class GameWorld {
       const entry = this.dirtyDishReturns[i];
       entry.timer -= dt;
       if (entry.timer <= 0) {
-        // Return dirty plate to return counter (3, 0) or nearby empty counter
         const returnX = 3;
         const returnY = 0;
         if (!this.mapGrid.getItemAt(returnX, returnY)) {
@@ -318,7 +317,7 @@ export class GameWorld {
     const tileType = this.mapGrid.getTileType(target.x, target.y);
     const itemOnCounter = this.mapGrid.getItemAt(target.x, target.y);
 
-    if (tileType === TILE_TYPES.FLOOR || tileType === TILE_TYPES.WALL) {
+    if (tileType === TILE_TYPES.WALL) {
       this.interactionPrompt = null;
       return;
     }
@@ -348,9 +347,9 @@ export class GameWorld {
         if (!itemOnCounter && this.player1.heldItem.isDirtyPlate()) {
           this.interactionPrompt = { key: 'SPACE', text: '放置髒盤準備洗滌 🚰' };
         }
-      } else if (tileType === TILE_TYPES.COUNTER) {
+      } else if (tileType === TILE_TYPES.COUNTER || tileType === TILE_TYPES.FLOOR) {
         if (!itemOnCounter) {
-          this.interactionPrompt = { key: 'SPACE', text: '放置於工作檯' };
+          this.interactionPrompt = { key: 'SPACE', text: tileType === TILE_TYPES.FLOOR ? '放置於地面' : '放置於工作檯' };
         } else if (itemOnCounter.isPlate()) {
           this.interactionPrompt = { key: 'SPACE', text: '裝入餐盤 🍽️' };
         }

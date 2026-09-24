@@ -1,6 +1,6 @@
 /**
  * Main Application Entry Point
- * Synchronizes Game Simulation, HUD, Order Tickets, Audio & Mobile Controls
+ * Synchronizes Game Simulation, HUD, Order Tickets, Audio, Modal Guides & Mobile Controls
  */
 
 import { InputManager } from './core/InputManager.js';
@@ -21,9 +21,18 @@ class App {
     this.hudComboEl = document.getElementById('hud-combo');
     this.ordersContainer = document.getElementById('order-tickets-container');
     this.soundToggleBtn = document.getElementById('btn-sound-toggle');
-    
+    this.recipeOpenBtn = document.getElementById('btn-recipe-open');
+    this.tutorialModal = document.getElementById('tutorial-modal');
+    this.tutorialCloseBtn = document.getElementById('btn-tutorial-close');
+    this.tutorialStartBtn = document.getElementById('btn-tutorial-start');
+
+    // DOM order cache to avoid 60fps innerHTML re-rendering and flickering
+    this.renderedOrderIds = new Set();
+    this.isPausedForModal = true; // Start paused showing the initial tutorial cookbook
+
     this.lastTime = performance.now();
     this.initAudioToggle();
+    this.initTutorialModal();
     this.initTouchControls();
     this.startLoop();
   }
@@ -36,6 +45,34 @@ class App {
     });
   }
 
+  initTutorialModal() {
+    const closeModal = () => {
+      this.tutorialModal?.classList.add('hidden');
+      this.isPausedForModal = false;
+      this.lastTime = performance.now(); // Reset delta time
+      this.gameWorld.soundManager.playPickup();
+    };
+
+    const openModal = () => {
+      this.tutorialModal?.classList.remove('hidden');
+      this.isPausedForModal = true;
+      this.gameWorld.soundManager.playDrop();
+    };
+
+    this.tutorialStartBtn?.addEventListener('click', closeModal);
+    this.tutorialCloseBtn?.addEventListener('click', closeModal);
+    this.recipeOpenBtn?.addEventListener('click', openModal);
+
+    window.addEventListener('keydown', (e) => {
+      if (!this.tutorialModal?.classList.contains('hidden')) {
+        if (e.code === 'Enter' || e.code === 'Escape' || e.code === 'Space') {
+          e.preventDefault();
+          closeModal();
+        }
+      }
+    });
+  }
+
   initTouchControls() {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const mobileControls = document.getElementById('mobile-controls');
@@ -45,7 +82,6 @@ class App {
       const btnPickup = document.getElementById('btn-mobile-pickup');
       const btnInteract = document.getElementById('btn-mobile-interact');
 
-      // Pickup / Throw on mobile
       btnPickup?.addEventListener('touchstart', (e) => {
         e.preventDefault();
         this.inputManager.isPickupHeld = true;
@@ -66,7 +102,6 @@ class App {
         }
       });
 
-      // Continuous Cutting / Washing on mobile
       btnInteract?.addEventListener('touchstart', (e) => {
         e.preventDefault();
         this.inputManager.interactJustPressed = true;
@@ -85,10 +120,12 @@ class App {
       const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
       this.lastTime = currentTime;
 
-      // Update Simulation
-      this.gameWorld.update(dt, this.inputManager);
+      // Update Simulation only when not paused by modal
+      if (!this.isPausedForModal) {
+        this.gameWorld.update(dt, this.inputManager);
+      }
 
-      // Render Canvas
+      // Always render canvas
       this.renderer.render(this.gameWorld, this.inputManager);
 
       // Update HUD & Orders
@@ -110,57 +147,84 @@ class App {
     if (this.hudScoreEl) this.hudScoreEl.textContent = this.gameWorld.score.toLocaleString();
     if (this.hudComboEl) this.hudComboEl.textContent = `x${this.gameWorld.combo.toFixed(1)}`;
 
-    // 3. Render Order Tickets in HUD Bar
-    this.renderOrderTickets();
+    // 3. Render Order Tickets in HUD Bar (Smooth DOM sync without rebuilding innerHTML)
+    this.syncOrderTicketsDOM();
 
     // 4. Update Floating Interactive Prompt
     this.updateHUDPrompt();
   }
 
-  renderOrderTickets() {
+  syncOrderTicketsDOM() {
     if (!this.ordersContainer) return;
-    const orders = this.gameWorld.orderManager.activeOrders;
+    const activeOrders = this.gameWorld.orderManager.activeOrders;
+    const activeIdSet = new Set(activeOrders.map(o => o.id));
 
-    if (orders.length === 0) {
+    // Remove obsolete order DOM nodes
+    const existingCards = this.ordersContainer.querySelectorAll('.order-card');
+    existingCards.forEach(card => {
+      if (!activeIdSet.has(card.id)) {
+        card.remove();
+        this.renderedOrderIds.delete(card.id);
+      }
+    });
+
+    // Remove placeholder if orders exist, or add if empty
+    const placeholder = this.ordersContainer.querySelector('.order-placeholder');
+    if (activeOrders.length > 0 && placeholder) {
+      placeholder.remove();
+    } else if (activeOrders.length === 0 && !placeholder) {
       this.ordersContainer.innerHTML = '<div class="order-placeholder">等待神仙顧客點餐中...</div>';
+      this.renderedOrderIds.clear();
       return;
     }
 
-    let html = '';
-    for (const order of orders) {
-      const progress = order.getProgress();
-      const pct = Math.floor(progress * 100);
-      let statusClass = '';
-      if (progress < 0.25) statusClass = 'danger';
-      else if (progress < 0.5) statusClass = 'warning';
+    // Add or update active orders
+    for (const order of activeOrders) {
+      let card = document.getElementById(order.id);
+      if (!card) {
+        // Create card element once
+        card = document.createElement('div');
+        card.className = 'order-card';
+        card.id = order.id;
 
-      const ingredientBadges = order.recipe.required.map(t => {
-        if (t.includes('BEEF')) return '🥩';
-        if (t.includes('VEGGIE')) return '🍢';
-        if (t.includes('TOAST')) return '🍞';
-        return '✨';
-      }).join(' ');
+        const ingredientBadges = order.recipe.required.map(t => {
+          if (t.includes('BEEF')) return '🥩';
+          if (t.includes('VEGGIE')) return '🍢';
+          if (t.includes('TOAST')) return '🍞';
+          return '✨';
+        }).join(' ');
 
-      html += `
-        <div class="order-card" id="${order.id}">
+        card.innerHTML = `
           <div class="order-header">
             <span>${order.recipe.icon} ${order.recipe.name}</span>
             <span class="order-pts">+${order.recipe.points}</span>
           </div>
           <div class="order-ingredients">${ingredientBadges}</div>
           <div class="order-timer-bar">
-            <div class="order-timer-fill ${statusClass}" style="width: ${pct}%;"></div>
+            <div class="order-timer-fill" style="width: 100%;"></div>
           </div>
-        </div>
-      `;
-    }
+        `;
+        this.ordersContainer.appendChild(card);
+        this.renderedOrderIds.add(order.id);
+      }
 
-    this.ordersContainer.innerHTML = html;
+      // Update timer progress bar without re-creating DOM
+      const fill = card.querySelector('.order-timer-fill');
+      if (fill) {
+        const progress = order.getProgress();
+        const pct = Math.floor(progress * 100);
+        fill.style.width = `${pct}%`;
+
+        fill.classList.remove('warning', 'danger');
+        if (progress < 0.25) fill.classList.add('danger');
+        else if (progress < 0.5) fill.classList.add('warning');
+      }
+    }
   }
 
   updateHUDPrompt() {
     const prompt = this.gameWorld.interactionPrompt;
-    if (prompt && this.promptEl) {
+    if (prompt && this.promptEl && !this.isPausedForModal) {
       this.promptEl.classList.remove('hidden');
       const p1 = this.gameWorld.player1;
       
