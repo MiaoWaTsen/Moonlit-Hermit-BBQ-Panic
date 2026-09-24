@@ -1,14 +1,15 @@
-# 規格說明書 (SPEC.md) - 月白之隱：中秋烤肉大作戰 (Moon BBQ Panic)
+# 規格說明書 (SPEC.md) - 月白之隱：中秋烤肉大作戰 (Moonlit Hermit: BBQ Panic)
 
-> **專案代號**：`moon-bbq-panic`  
-> **版本**：v0.1.0 (Draft)  
-> **技術棧**：HTML5 Canvas / Vanilla JS (ES Modules) + Vite + Web Audio API + LocalStorage/Mock API Backend
+> **專案代號**：`moonlit-hermit-bbq`  
+> **版本**：v0.1.1 (Draft)  
+> **技術棧**：HTML5 Canvas / Vanilla JS (ES Modules) + Vite + Web Audio API + LocalStorage/Mock API Backend  
+> **部署目標**：Vercel (支援 SPA / 靜態一鍵極速部署)
 
 ---
 
 ## 1. 專案願景與目標 (Vision & Goals)
 打造一款以「中秋節烤肉狂歡」為主題的 2D 俯視角（Top-down）/ 斜角（Isometric）時間管理協作烹飪遊戲（類似 Overcooked 煮過頭）。
-玩家需要扮演月宮廚神（玉兔 / 吳剛 / 嫦娥），在混亂的後廚地圖中移動，拿取食材、切備料、烤肉烤串、組裝出餐、洗滌髒盤子，並在時限內滿足挑剔的神仙顧客訂單，爭奪「中秋廚神排行榜」榜首。
+玩家需要扮演月宮隱士廚神「月白之隱」及夥伴（玉兔 / 吳剛 / 嫦娥），在混亂的後廚地圖中移動，拿取食材、切備料、烤肉烤串、組裝出餐、洗滌髒盤子，並在時限內滿足挑剔的神仙顧客訂單，爭奪「中秋廚神排行榜」榜首。
 
 ---
 

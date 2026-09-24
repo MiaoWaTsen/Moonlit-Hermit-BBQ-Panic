@@ -13,8 +13,9 @@
 
 ---
 
-## 🚀 本地執行方式 (Local Setup)
+## 🚀 本地執行與 Vercel 部署 (Local Setup & Deployment)
 
+### 本地開發
 ```bash
 # 1. 安裝依賴套件
 npm install
@@ -25,6 +26,12 @@ npm run dev
 # 3. 建置生產版本
 npm run build
 ```
+
+### Vercel 雲端部署
+本專案為標準純前端 Vite 架構，支援零配置一鍵上線 Vercel：
+- **Framework Preset**: Vite
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
 
 ---
 
