@@ -1,5 +1,6 @@
 /**
  * Renderer2D: High-DPI Canvas 2D Game Renderer with Rich Mid-Autumn Aesthetic
+ * Includes Progress Bars for Cutting & BBQ Grills, State Animations and Particle Rendering
  */
 
 import { TILE_SIZE, MAP_COLS, MAP_ROWS, CANVAS_WIDTH, CANVAS_HEIGHT, TILE_TYPES, ITEM_TYPES } from '../core/Constants.js';
@@ -8,6 +9,7 @@ export class Renderer2D {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this.animClock = 0;
     
     this.setupCanvasDPI();
     window.addEventListener('resize', () => this.setupCanvasDPI());
@@ -24,6 +26,7 @@ export class Renderer2D {
   }
 
   render(world) {
+    this.animClock += 0.05;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -40,6 +43,12 @@ export class Renderer2D {
     for (const player of world.players) {
       this.renderPlayer(player);
     }
+
+    // 5. Draw Progress Bars (Cutting / Cooking / Washing)
+    this.renderStationProgressBars(world.mapGrid);
+
+    // 6. Draw Particle System
+    world.particleSystem.render(ctx);
   }
 
   renderMapBase(mapGrid) {
@@ -96,15 +105,7 @@ export class Renderer2D {
   }
 
   drawStationBase(ctx, px, py, type) {
-    // Top-down counter with 3D bevel edge
-    const r = 6;
     ctx.save();
-
-    // Default Counter
-    ctx.fillStyle = '#6d432b'; // Wood tone
-    ctx.strokeStyle = '#422818';
-    ctx.lineWidth = 2;
-
     switch (type) {
       case TILE_TYPES.COUNTER:
         // Polished mahogany prep table
@@ -148,10 +149,9 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.CUTTING_BOARD:
-        // Light wood chopping board with knife icon
+        // Light wood chopping board
         ctx.fillStyle = '#9e6d48';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        // Inner board
         ctx.fillStyle = '#eed6aa';
         ctx.fillRect(px + 8, py + 8, TILE_SIZE - 16, TILE_SIZE - 16);
         ctx.font = '16px sans-serif';
@@ -162,22 +162,23 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.GRILL:
-        // Charcoal BBQ grill with glowing coals
+        // Charcoal BBQ grill with dynamic glowing coals
         ctx.fillStyle = '#22252c';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        // Burning charcoal glow inside
+        
+        const pulse = Math.sin(this.animClock * 3) * 0.15 + 0.85;
         const grad = ctx.createRadialGradient(
           px + TILE_SIZE / 2, py + TILE_SIZE / 2, 4,
           px + TILE_SIZE / 2, py + TILE_SIZE / 2, TILE_SIZE / 2 - 4
         );
-        grad.addColorStop(0, '#ff5722');
-        grad.addColorStop(0.5, '#d32f2f');
+        grad.addColorStop(0, `rgba(255, 87, 34, ${pulse})`);
+        grad.addColorStop(0.6, `rgba(211, 47, 47, ${pulse * 0.8})`);
         grad.addColorStop(1, '#1b1d24');
         ctx.fillStyle = grad;
         ctx.fillRect(px + 6, py + 6, TILE_SIZE - 12, TILE_SIZE - 12);
         
         // Grill wire mesh
-        ctx.strokeStyle = '#616161';
+        ctx.strokeStyle = '#757575';
         ctx.lineWidth = 1.5;
         for (let i = 10; i < TILE_SIZE - 6; i += 8) {
           ctx.beginPath();
@@ -189,7 +190,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.PLATE_STACK:
-        // Plate rack
         ctx.fillStyle = '#3a4a6b';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.font = '22px sans-serif';
@@ -200,7 +200,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.SINK:
-        // Stainless steel sink
         ctx.fillStyle = '#455a64';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.fillStyle = '#00acc1';
@@ -213,7 +212,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.DELIVERY:
-        // Golden delivery window
         ctx.fillStyle = '#b78103';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.fillStyle = '#ffd700';
@@ -226,7 +224,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.TRASH:
-        // Trash bin
         ctx.fillStyle = '#37474f';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.font = '20px sans-serif';
@@ -236,7 +233,6 @@ export class Renderer2D {
         this.drawStationLabel(ctx, px, py, '垃圾桶');
         break;
     }
-
     ctx.restore();
   }
 
@@ -246,6 +242,95 @@ export class Renderer2D {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.textAlign = 'center';
     ctx.fillText(text, px + TILE_SIZE / 2, py + TILE_SIZE - 4);
+    ctx.restore();
+  }
+
+  renderStationProgressBars(mapGrid) {
+    const ctx = this.ctx;
+
+    for (let y = 0; y < MAP_ROWS; y++) {
+      for (let x = 0; x < MAP_COLS; x++) {
+        const type = mapGrid.getTileType(x, y);
+        const item = mapGrid.getItemAt(x, y);
+        const px = x * TILE_SIZE;
+        const py = y * TILE_SIZE;
+
+        if (!item) continue;
+
+        // 1. Cutting Progress Bar
+        if (type === TILE_TYPES.CUTTING_BOARD && item.chopProgress > 0 && item.chopProgress < 1.0) {
+          this.drawProgressBar(ctx, px, py - 6, item.chopProgress, '#00e5ff', '🔪');
+        }
+
+        // 2. BBQ Grill Cooking Progress Bar & Warnings
+        if (type === TILE_TYPES.GRILL) {
+          if (item.isBurnt()) {
+            // Burnt state indicator
+            this.drawStatusTag(ctx, px + TILE_SIZE / 2, py - 6, '⬛ 烤焦了！', '#e74c3c');
+          } else if (item.isBurningWarning()) {
+            // Warning blinking bar
+            const blink = Math.sin(this.animClock * 15) > 0;
+            const progress = (item.cookProgress - 1.0) / 1.0;
+            this.drawProgressBar(ctx, px, py - 6, progress, blink ? '#ff1744' : '#ff9100', '⚠️');
+          } else if (item.isPerfect()) {
+            // Perfect cooked state
+            this.drawStatusTag(ctx, px + TILE_SIZE / 2, py - 6, '✨ 熟了！', '#2ecc71');
+          } else if (item.cookProgress > 0) {
+            // Cooking towards perfect
+            this.drawProgressBar(ctx, px, py - 6, item.cookProgress, '#ff9800', '🔥');
+          }
+        }
+      }
+    }
+  }
+
+  drawProgressBar(ctx, x, y, progress, color, icon = '') {
+    const barWidth = TILE_SIZE - 8;
+    const barHeight = 7;
+    const px = x + 4;
+    const py = y;
+
+    ctx.save();
+    // Background bar
+    ctx.fillStyle = 'rgba(10, 15, 25, 0.85)';
+    ctx.fillRect(px, py, barWidth, barHeight);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px, py, barWidth, barHeight);
+
+    // Progress fill
+    ctx.fillStyle = color;
+    ctx.fillRect(px + 1, py + 1, Math.max(0, (barWidth - 2) * Math.min(progress, 1.0)), barHeight - 2);
+
+    if (icon) {
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(icon, px - 2, py + barHeight / 2);
+    }
+    ctx.restore();
+  }
+
+  drawStatusTag(ctx, cx, cy, text, bgColor) {
+    ctx.save();
+    ctx.font = 'bold 9px "Noto Sans TC", sans-serif';
+    const textWidth = ctx.measureText(text).width;
+    const padding = 5;
+    
+    // Background capsule
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(cx - textWidth / 2 - padding, cy - 6, textWidth + padding * 2, 14, 7);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx, cy + 1);
     ctx.restore();
   }
 
@@ -293,21 +378,19 @@ export class Renderer2D {
 
     // Cute Long Bunny Ears
     ctx.fillStyle = '#ffffff';
-    // Left ear
     ctx.beginPath();
     ctx.ellipse(cx - 7, cy - player.radius - 8, 4, 10, -0.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#ffb6c1'; // Pink inner ear
+    ctx.fillStyle = '#ffb6c1';
     ctx.beginPath();
     ctx.ellipse(cx - 7, cy - player.radius - 8, 2, 7, -0.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Right ear
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.ellipse(cx + 7, cy - player.radius - 8, 4, 10, 0.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#ffb6c1'; // Pink inner ear
+    ctx.fillStyle = '#ffb6c1';
     ctx.beginPath();
     ctx.ellipse(cx + 7, cy - player.radius - 8, 2, 7, 0.2, 0, Math.PI * 2);
     ctx.fill();
@@ -326,7 +409,7 @@ export class Renderer2D {
     ctx.arc(cx + 9, cy + 2, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Facing indicator badge (Chef hat feather or golden arrow)
+    // Facing indicator badge
     const arrowDist = player.radius + 6;
     const ax = cx + player.facing.x * arrowDist;
     const ay = cy + player.facing.y * arrowDist;
@@ -360,7 +443,7 @@ export class Renderer2D {
 
       // Draw assembled ingredients on plate
       if (item.ingredients.length > 0) {
-        ctx.font = '14px sans-serif';
+        ctx.font = '13px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const icons = item.ingredients.map(t => {
@@ -374,7 +457,6 @@ export class Renderer2D {
     } 
     // If it's single food or object
     else {
-      // Background bubble for clarity
       ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.beginPath();
       ctx.arc(0, 0, 14, 0, Math.PI * 2);
