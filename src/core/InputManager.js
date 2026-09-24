@@ -201,6 +201,11 @@ export class InputManager {
     this.p1ThrowJustReleased = false;
     return r ? pow : null;
   }
+  consumeP1InteractJustPressed() {
+    const p = this.p1InteractJustPressed;
+    this.p1InteractJustPressed = false;
+    return p;
+  }
   isP1Interacting() {
     return this.p1IsInteractingHeld;
   }
@@ -216,6 +221,11 @@ export class InputManager {
     const pow = this.p2ThrowPower;
     this.p2ThrowJustReleased = false;
     return r ? pow : null;
+  }
+  consumeP2InteractJustPressed() {
+    const p = this.p2InteractJustPressed;
+    this.p2InteractJustPressed = false;
+    return p;
   }
   isP2Interacting() {
     return this.p2IsInteractingHeld;

@@ -100,10 +100,22 @@ export class GameWorld {
       }
     }
 
-    // 5. Process Interactions for P1 and P2
-    this.handlePlayerInteractions(this.player1, dt, inputManager.consumeP1Pickup(), inputManager.isP1Interacting());
+    // 5. Process Interactions for P1 and P2 (Support Space/K and E/L)
+    this.handlePlayerInteractions(
+      this.player1, 
+      dt, 
+      inputManager.consumeP1Pickup(), 
+      inputManager.isP1Interacting(),
+      inputManager.consumeP1InteractJustPressed()
+    );
     if (this.is2PMode) {
-      this.handlePlayerInteractions(this.player2, dt, inputManager.consumeP2Pickup(), inputManager.isP2Interacting());
+      this.handlePlayerInteractions(
+        this.player2, 
+        dt, 
+        inputManager.consumeP2Pickup(), 
+        inputManager.isP2Interacting(),
+        inputManager.consumeP2InteractJustPressed()
+      );
     }
 
     // 6. Update Grills & Cooking
@@ -126,8 +138,32 @@ export class GameWorld {
     // 10. Update Particles
     this.particleSystem.update(dt);
 
-    // 11. Compute prompt for HUD
+    // 11. Update Floating Messages
+    if (this.floatingMessages) {
+      for (let i = this.floatingMessages.length - 1; i >= 0; i--) {
+        const msg = this.floatingMessages[i];
+        msg.timer -= dt;
+        msg.y -= dt * 22; // Smoothly float upwards
+        if (msg.timer <= 0) {
+          this.floatingMessages.splice(i, 1);
+        }
+      }
+    }
+
+    // 12. Compute prompt for HUD
     this.updateInteractionPrompt(inputManager);
+  }
+
+  showFloatingMessage(text, x, y, color = '#ffd700') {
+    if (!this.floatingMessages) this.floatingMessages = [];
+    this.floatingMessages.push({
+      text,
+      x,
+      y,
+      color,
+      timer: 1.8,
+      maxTimer: 1.8
+    });
   }
 
   throwHeldItem(player, power) {
@@ -142,17 +178,19 @@ export class GameWorld {
     this.soundManager.playThrow();
   }
 
-  handlePlayerInteractions(player, dt, pickupPressed, isInteracting) {
+  handlePlayerInteractions(player, dt, pickupPressed, isInteracting, interactJustPressed = false) {
     const target = player.getTargetInteractionGrid();
     const tileType = this.mapGrid.getTileType(target.x, target.y);
     const itemOnCounter = this.mapGrid.getItemAt(target.x, target.y);
+    const targetCenterX = (target.x + 0.5) * TILE_SIZE;
+    const targetCenterY = (target.y + 0.5) * TILE_SIZE;
 
     // Continuous Cutting (Holding E/G or L)
     if (tileType === TILE_TYPES.CUTTING_BOARD && itemOnCounter && itemOnCounter.isChoppable()) {
       if (isInteracting) {
         const completed = itemOnCounter.advanceChop(dt);
-        const worldX = (target.x + 0.5) * TILE_SIZE;
-        const worldY = (target.y + 0.5) * TILE_SIZE;
+        const worldX = targetCenterX;
+        const worldY = targetCenterY;
         
         if (Math.random() < 0.25) this.soundManager.playChop();
         this.particleSystem.emit(worldX, worldY, 'chop', 2);
@@ -167,8 +205,8 @@ export class GameWorld {
     if (tileType === TILE_TYPES.SINK && itemOnCounter && itemOnCounter.isDirtyPlate()) {
       if (isInteracting) {
         const washed = this.mapGrid.advanceWash(target.x, target.y, dt);
-        const worldX = (target.x + 0.5) * TILE_SIZE;
-        const worldY = (target.y + 0.5) * TILE_SIZE;
+        const worldX = targetCenterX;
+        const worldY = targetCenterY;
 
         if (Math.random() < 0.2) this.soundManager.playWash();
         this.particleSystem.emit(worldX, worldY, 'sparkle', 1);
@@ -180,36 +218,47 @@ export class GameWorld {
       }
     }
 
-    // Pickup / Drop / Serve (Quick Tap)
+    // Serving / Delivery (Triggered by either Space / K or E / L)
+    if (tileType === TILE_TYPES.DELIVERY && (pickupPressed || interactJustPressed)) {
+      if (player.heldItem) {
+        if (player.heldItem.isPlate()) {
+          const result = this.orderManager.matchAndServe(player.heldItem);
+          if (result && result.success) {
+            const earned = Math.floor(result.points * this.combo);
+            this.score += earned;
+            this.combo = Math.min(2.5, +(this.combo + 0.2).toFixed(1));
+            this.dishesServedCount = (this.dishesServedCount || 0) + 1;
+            if (this.onOrderServed) this.onOrderServed(result);
+
+            this.soundManager.playOrderSuccess();
+            this.particleSystem.emit(targetCenterX, targetCenterY, 'sparkle', 25);
+            this.showFloatingMessage(result.message || `+${earned}分`, targetCenterX, targetCenterY - 10, '#ffd700');
+
+            player.heldItem = null;
+            this.dirtyDishReturns.push({ timer: 2.5 });
+            return;
+          } else {
+            this.soundManager.playBuzzer();
+            this.combo = 1.0;
+            this.showFloatingMessage(result?.message || '❌ 配方不符！', targetCenterX, targetCenterY - 10, '#ff4757');
+            return;
+          }
+        } else if (player.heldItem.isFood()) {
+          this.soundManager.playWarning();
+          this.showFloatingMessage('⚠️ 需先將食材裝入餐盤 (🍽️) 再出餐！', targetCenterX, targetCenterY - 10, '#ffa502');
+          return;
+        }
+      }
+    }
+
+    // Pickup / Drop / Interact (Quick Tap)
     if (pickupPressed) {
       if (player.heldItem) {
-        // Delivery
-        if (tileType === TILE_TYPES.DELIVERY) {
-          if (player.heldItem.isPlate()) {
-            const result = this.orderManager.matchAndServe(player.heldItem);
-            if (result) {
-              const earned = Math.floor(result.points * this.combo);
-              this.score += earned;
-              this.combo = Math.min(2.5, +(this.combo + 0.2).toFixed(1));
-              
-              this.soundManager.playOrderSuccess();
-              this.particleSystem.emit((target.x + 0.5) * TILE_SIZE, (target.y + 0.5) * TILE_SIZE, 'sparkle', 25);
-              
-              player.heldItem = null;
-              this.dirtyDishReturns.push({ timer: 2.5 });
-              return;
-            } else {
-              this.soundManager.playBuzzer();
-              this.combo = 1.0;
-              return;
-            }
-          }
-        }
-
         // Trash
         if (tileType === TILE_TYPES.TRASH) {
           this.soundManager.playDrop();
-          this.particleSystem.emit((target.x + 0.5) * TILE_SIZE, (target.y + 0.5) * TILE_SIZE, 'spark', 6);
+          this.particleSystem.emit(targetCenterX, targetCenterY, 'spark', 6);
+          this.showFloatingMessage('🗑️ 已丟棄', targetCenterX, targetCenterY - 10, '#94a3b8');
           player.heldItem = null;
           return;
         }
@@ -219,6 +268,7 @@ export class GameWorld {
           if (!itemOnCounter) {
             if (tileType === TILE_TYPES.GRILL && player.heldItem.isChoppable()) {
               this.soundManager.playWarning();
+              this.showFloatingMessage('⚠️ 生食材需先在砧板切碎！🔪', targetCenterX, targetCenterY - 10, '#ffa502');
               return;
             }
 
@@ -227,21 +277,37 @@ export class GameWorld {
             player.heldItem = null;
             return;
           } else {
-            // Food assembly onto Plate
+            // Food assembly onto Plate on counter
             if (itemOnCounter.isPlate() && player.heldItem.isFood()) {
               if (itemOnCounter.addIngredient(player.heldItem)) {
                 this.soundManager.playPickup();
-                this.particleSystem.emit((target.x + 0.5) * TILE_SIZE, (target.y + 0.5) * TILE_SIZE, 'sparkle', 6);
+                this.particleSystem.emit(targetCenterX, targetCenterY, 'sparkle', 8);
                 player.heldItem = null;
+                return;
+              } else {
+                this.soundManager.playWarning();
+                if (player.heldItem.type === ITEM_TYPES.CHOPPED_BEEF || player.heldItem.type === ITEM_TYPES.CHOPPED_VEGGIE || player.heldItem.type === ITEM_TYPES.RAW_BEEF || player.heldItem.type === ITEM_TYPES.RAW_VEGGIE) {
+                  this.showFloatingMessage('⚠️ 食材需先在烤爐上烤熟！🔥', targetCenterX, targetCenterY - 10, '#ff7f50');
+                } else {
+                  this.showFloatingMessage('⚠️ 餐盤已裝滿或食材無效！', targetCenterX, targetCenterY - 10, '#ffa502');
+                }
                 return;
               }
             }
-            // Plate picking up food
+            // Plate in hand picking up food from counter/grill
             if (player.heldItem.isPlate() && itemOnCounter.isFood()) {
               if (player.heldItem.addIngredient(itemOnCounter)) {
                 this.soundManager.playPickup();
-                this.particleSystem.emit((target.x + 0.5) * TILE_SIZE, (target.y + 0.5) * TILE_SIZE, 'sparkle', 6);
+                this.particleSystem.emit(targetCenterX, targetCenterY, 'sparkle', 8);
                 this.mapGrid.setItemAt(target.x, target.y, null);
+                return;
+              } else {
+                this.soundManager.playWarning();
+                if (itemOnCounter.type === ITEM_TYPES.CHOPPED_BEEF || itemOnCounter.type === ITEM_TYPES.CHOPPED_VEGGIE || itemOnCounter.type === ITEM_TYPES.RAW_BEEF || itemOnCounter.type === ITEM_TYPES.RAW_VEGGIE) {
+                  this.showFloatingMessage('⚠️ 食材需先在烤爐上烤熟！🔥', targetCenterX, targetCenterY - 10, '#ff7f50');
+                } else {
+                  this.showFloatingMessage('⚠️ 餐盤已裝滿或食材無效！', targetCenterX, targetCenterY - 10, '#ffa502');
+                }
                 return;
               }
             }
@@ -324,12 +390,14 @@ export class GameWorld {
       const entry = this.dirtyDishReturns[i];
       entry.timer -= dt;
       if (entry.timer <= 0) {
-        const returnX = 3;
-        const returnY = 0;
+        let returnX = this.mapId === 'map2' ? 10 : 3;
+        let returnY = this.mapId === 'map2' ? 6 : 0;
         if (!this.mapGrid.getItemAt(returnX, returnY)) {
           this.mapGrid.setItemAt(returnX, returnY, Item.create(ITEM_TYPES.DIRTY_PLATE));
-        } else if (!this.mapGrid.getItemAt(4, 0)) {
-          this.mapGrid.setItemAt(4, 0, Item.create(ITEM_TYPES.DIRTY_PLATE));
+        } else {
+          const altX = this.mapId === 'map2' ? 10 : 4;
+          const altY = this.mapId === 'map2' ? 5 : 0;
+          this.mapGrid.setItemAt(altX, altY, Item.create(ITEM_TYPES.DIRTY_PLATE));
         }
         this.soundManager.playDrop();
         this.dirtyDishReturns.splice(i, 1);

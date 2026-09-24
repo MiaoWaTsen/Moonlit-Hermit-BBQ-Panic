@@ -110,12 +110,35 @@ export class OrderManager {
     return type;
   }
 
-  // Check if a served plate matches any active order
-  matchAndServe(plateItem) {
+  // Find if ingredients on plate match ANY valid recipe in the cookbook
+  findMatchingRecipe(plateItem) {
     if (!plateItem.isPlate() || plateItem.ingredients.length === 0) return null;
+    const normalizedPlate = plateItem.ingredients.map(t => this.normalizeItemType(t)).sort();
+
+    for (const recipe of RECIPES) {
+      const normalizedReq = recipe.required.map(t => this.normalizeItemType(t)).sort();
+      if (normalizedReq.length === normalizedPlate.length &&
+          normalizedReq.every((val, idx) => val === normalizedPlate[idx])) {
+        return recipe;
+      }
+    }
+    return null;
+  }
+
+  // Check if a served plate matches any active order (or is a valid off-menu dish)
+  matchAndServe(plateItem) {
+    if (!plateItem.isPlate() || plateItem.ingredients.length === 0) {
+      return { success: false, reason: 'EMPTY_PLATE', message: '❌ 空餐盤無法出餐！' };
+    }
+
+    const matchedRecipe = this.findMatchingRecipe(plateItem);
+    if (!matchedRecipe) {
+      return { success: false, reason: 'INVALID_RECIPE', message: '❌ 料理配方不符！(請按 H 查看食譜)' };
+    }
 
     const normalizedPlate = plateItem.ingredients.map(t => this.normalizeItemType(t)).sort();
 
+    // 1. Check if it fulfills one of the active order tickets
     for (let i = 0; i < this.activeOrders.length; i++) {
       const order = this.activeOrders[i];
       const normalizedReq = order.recipe.required.map(t => this.normalizeItemType(t)).sort();
@@ -126,16 +149,29 @@ export class OrderManager {
         const timeRatio = order.getProgress();
         const basePoints = order.recipe.points;
         const tip = timeRatio > 0.5 ? Math.floor(basePoints * 0.3) : 0;
+        const totalPoints = basePoints + tip;
         
         this.activeOrders.splice(i, 1);
         return {
+          success: true,
+          isActiveOrder: true,
           recipe: order.recipe,
-          points: basePoints + tip,
-          isFast: timeRatio > 0.5
+          points: totalPoints,
+          isFast: timeRatio > 0.5,
+          message: `🛎️ 成功出餐！${order.recipe.name} (+${totalPoints}分)`
         };
       }
     }
 
-    return null;
+    // 2. If valid cookbook recipe but not currently in active tickets, accept as off-menu dish!
+    const basePoints = Math.floor(matchedRecipe.points * 0.85);
+    return {
+      success: true,
+      isActiveOrder: false,
+      recipe: matchedRecipe,
+      points: basePoints,
+      isFast: false,
+      message: `✨ 月宮額外出餐！${matchedRecipe.name} (+${basePoints}分)`
+    };
   }
 }

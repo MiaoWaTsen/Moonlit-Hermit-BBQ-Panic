@@ -36,6 +36,9 @@ class App {
     this.currentLbMode = '1p';
 
     this.gameWorld = new GameWorld(false, this.p1Name, this.p2Name, this.selectedMapId);
+    this.gameWorld.onOrderServed = () => {
+      this.dishesServedCount++;
+    };
     this.renderer = new Renderer2D(this.canvas);
     
     // HUD Elements
@@ -329,6 +332,9 @@ class App {
 
     // Create fresh GameWorld with correct map, plate count & player names
     this.gameWorld = new GameWorld(this.is2PMode, this.p1Name, this.p2Name, this.selectedMapId);
+    this.gameWorld.onOrderServed = () => {
+      this.dishesServedCount++;
+    };
     this.dishesServedCount = 0;
     this.maxComboReached = 1.0;
     this.renderedOrderIds.clear();

@@ -69,6 +69,13 @@ export class Renderer2D {
 
     // 8. Draw Particle System
     world.particleSystem.render(ctx);
+
+    // 9. Draw Floating Status & Score Messages
+    if (world.floatingMessages) {
+      for (const msg of world.floatingMessages) {
+        this.renderFloatingMessage(msg);
+      }
+    }
   }
 
   renderMapBase(mapGrid) {
@@ -622,6 +629,36 @@ export class Renderer2D {
     ctx.textBaseline = 'middle';
     ctx.fillText(actionText, startX + 6 + keyWidth, startY + boxHeight / 2 + 1);
 
+    ctx.restore();
+  }
+
+  renderFloatingMessage(msg) {
+    const ctx = this.ctx;
+    ctx.save();
+    const alpha = Math.max(0, Math.min(1, msg.timer / 0.5));
+    ctx.globalAlpha = alpha;
+    ctx.font = 'bold 12px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const textWidth = ctx.measureText(msg.text).width;
+    const boxWidth = textWidth + 18;
+    const boxHeight = 24;
+
+    // Dark rounded pill backdrop
+    ctx.fillStyle = 'rgba(10, 16, 30, 0.92)';
+    ctx.beginPath();
+    ctx.roundRect(msg.x - boxWidth / 2, msg.y - boxHeight / 2, boxWidth, boxHeight, 12);
+    ctx.fill();
+    ctx.strokeStyle = msg.color || '#ffd700';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = msg.color || '#ffd700';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = msg.color || '#ffffff';
+    ctx.fillText(msg.text, msg.x, msg.y);
     ctx.restore();
   }
 }

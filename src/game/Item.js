@@ -109,7 +109,23 @@ export class Item {
   canAddToPlate(foodItem) {
     if (!this.isPlate()) return false;
     if (foodItem.isBurnt()) return false;
-    if (foodItem.chopProgress < 1.0 && foodItem.type !== ITEM_TYPES.TOAST) return false;
+
+    // Disallow raw or un-grilled food on plates
+    if (foodItem.type === ITEM_TYPES.RAW_BEEF || foodItem.type === ITEM_TYPES.RAW_VEGGIE) {
+      return false;
+    }
+    if (foodItem.type === ITEM_TYPES.CHOPPED_BEEF || foodItem.type === ITEM_TYPES.CHOPPED_VEGGIE) {
+      return false; // Must be cooked on grill first!
+    }
+
+    // Only cooked items (or toast) can be placed on a plate
+    const isCookedFood = (
+      foodItem.type === ITEM_TYPES.COOKED_BEEF ||
+      foodItem.type === ITEM_TYPES.COOKED_VEGGIE ||
+      foodItem.type === ITEM_TYPES.TOAST ||
+      foodItem.type === ITEM_TYPES.COOKED_TOAST
+    );
+    if (!isCookedFood) return false;
     if (this.ingredients.length >= 3) return false;
     return true;
   }
