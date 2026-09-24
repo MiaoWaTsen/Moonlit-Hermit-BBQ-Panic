@@ -45,6 +45,7 @@
           <span class="stat-label">連擊</span>
           <span class="stat-val" id="hud-combo">x1.0</span>
         </div>
+        <button id="btn-hud-home" class="icon-btn" title="返回主頁大廳">🏠 主頁</button>
         <button id="btn-recipe-open" class="icon-btn" title="食譜手冊 (快捷鍵 H / R)">📖 食譜</button>
         <button id="btn-leaderboard-open" class="icon-btn" title="排行榜">🏆 排行榜</button>
         <button id="btn-sound-toggle" class="icon-btn" title="音效切換">🔊</button>
@@ -84,7 +85,82 @@
       <div class="key-hint mode-indicator" id="game-mode-indicator">1P 單人修練模式</div>
     </footer>
 
-    <!-- 1. Player Nickname Modal (First Step on site entry) -->
+    <!-- 0. Main Game Home / Lobby Modal (New Dedicated Main Menu) -->
+    <div id="home-modal" class="modal-backdrop hidden">
+      <div class="modal-card home-card glass-panel">
+        <div class="home-hero">
+          <div class="home-badge">🌕 中秋限定 • 廣寒宮烤肉爭霸</div>
+          <h1 class="home-title">月白之隱 <small>中秋烤肉大作戰</small></h1>
+          <p class="home-subtitle">Moonlit Hermit: BBQ Panic • 雙廚協作 / 單人極限 料理挑戰</p>
+        </div>
+
+        <!-- Chef Profile Bar -->
+        <div class="home-chef-bar">
+          <div class="home-chef-info">
+            <span class="home-chef-avatar">🐰</span>
+            <div class="home-chef-text">
+              <span class="home-chef-label">主廚大名</span>
+              <strong id="home-p1-name" class="home-chef-name">玉兔大廚</strong>
+            </div>
+          </div>
+          <button id="btn-home-edit-name" class="btn-small-ghost" title="修改大廚暱稱">✏️ 修改暱稱</button>
+        </div>
+
+        <!-- Section 1: Map Selection -->
+        <div class="home-section-title">🗺️ 選擇挑戰地圖</div>
+        <div class="map-select-grid home-map-grid">
+          <div class="map-card active" id="home-map-1" data-map="map1">
+            <div class="map-icon">🌕</div>
+            <div class="map-info">
+              <h4>地圖一：月宮庭院 (經典緊湊)</h4>
+              <p>中島料理動線，緊湊流暢，適合快速出餐與備料 (1P: 2盤 / 2P: 3盤)</p>
+            </div>
+            <span class="map-badge">已選擇</span>
+          </div>
+          <div class="map-card" id="home-map-2" data-map="map2">
+            <div class="map-icon">🌲</div>
+            <div class="map-info">
+              <h4>地圖二：桂樹林天台 (雙翼分工)</h4>
+              <p>左翼備料右翼烘烤，隔桌飛拋食材，極限協作挑戰 (1P: 2盤 / 2P: 3盤)</p>
+            </div>
+            <span class="map-badge">點擊切換</span>
+          </div>
+        </div>
+
+        <!-- Section 2: Mode Launch Buttons -->
+        <div class="home-section-title">🎮 選擇模式開始遊戲</div>
+        <div class="home-play-grid">
+          <button id="btn-home-start-1p" class="home-play-btn p1-btn">
+            <span class="play-icon">🐰</span>
+            <div class="play-text">
+              <div class="play-title">1P 單人修練模式</div>
+              <div class="play-desc">玉兔大廚獨當一面 (WASD + Space + E)</div>
+            </div>
+            <span class="play-arrow">開始料理 ➔</span>
+          </button>
+          <button id="btn-home-start-2p" class="home-play-btn p2-btn">
+            <span class="play-icon">👥</span>
+            <div class="play-text">
+              <div class="play-title">2P 雙人同機協作</div>
+              <div class="play-desc">1P 玉兔 + 2P 吳剛 同心協力出大餐</div>
+            </div>
+            <span class="play-arrow">輸入 2P 暱稱 ➔</span>
+          </button>
+        </div>
+
+        <!-- Section 3: Quick Navigation -->
+        <div class="home-nav-row">
+          <button id="btn-home-recipe" class="home-nav-btn">
+            <span class="nav-icon">📖</span> 查看食譜指南
+          </button>
+          <button id="btn-home-leaderboard" class="home-nav-btn">
+            <span class="nav-icon">🏆</span> 中秋廚神天梯榜
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. Player Nickname Modal (First Step on site entry or via edit name) -->
     <div id="auth-modal" class="modal-backdrop">
       <div class="modal-card auth-card glass-panel">
         <div class="modal-header">
@@ -96,77 +172,31 @@
         <div class="modal-body auth-body">
           <div class="p2-intro-box">
             <p>🍢 歡迎來到月宮烤肉大廚房！</p>
-            <p>請輸入您的 1P 大廚暱稱以開始修練：</p>
+            <p>請輸入您的 1P 大廚暱稱以進入大廳：</p>
           </div>
           <form id="auth-form" class="auth-form">
             <div class="form-group" id="group-username">
               <label for="auth-username">1P 大廚暱稱 (玉兔)</label>
               <input type="text" id="auth-username" placeholder="請輸入大廚暱稱 (例如: 玉兔大廚)" value="玉兔大廚" required autocomplete="username" autofocus>
             </div>
-            <button type="submit" id="btn-auth-submit" class="btn-primary full-btn">確定並進入料理手冊 ➔</button>
+            <button type="submit" id="btn-auth-submit" class="btn-primary full-btn">確定並進入遊戲主頁 ➔</button>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- 2. Tutorial & Recipe Guidebook Modal Overlay (Second Step: Map & Mode Select + Instructions) -->
+    <!-- 2. Recipe Guidebook Modal Overlay (In-game or accessible from Home) -->
     <div id="tutorial-modal" class="modal-backdrop hidden">
       <div class="modal-card cookbook-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">📖</span>
-            <h2 id="tutorial-header-title">月宮大廚修練手冊 <small>選擇地圖與模式 (按 H / R 可隨時查看食譜)</small></h2>
+            <h2 id="tutorial-header-title">月宮大廚食譜指南 <small>(按 H / R 或 空白鍵 隨時開啟/關閉)</small></h2>
           </div>
           <button id="btn-tutorial-close" class="modal-close-btn">&times;</button>
         </div>
 
         <div class="modal-body">
-          <!-- Section 0: Map Selection (Hidden once match has started) -->
-          <div class="guide-section map-select-section" id="map-select-section">
-            <h3 class="section-title">🗺️ 第一步：請選擇挑戰地圖</h3>
-            <div class="map-select-grid">
-              <div class="map-card active" id="map-select-1" data-map="map1">
-                <div class="map-icon">🌕</div>
-                <div class="map-info">
-                  <h4>地圖一：月宮庭院 (經典緊湊)</h4>
-                  <p>中島料理動線，緊湊流暢，適合快速出餐與備料 (1P: 2盤 / 2P: 3盤)</p>
-                </div>
-                <span class="map-badge">已選擇</span>
-              </div>
-              <div class="map-card" id="map-select-2" data-map="map2">
-                <div class="map-icon">🌲</div>
-                <div class="map-info">
-                  <h4>地圖二：桂樹林天台 (雙翼分工)</h4>
-                  <p>左翼備料右翼烘烤，隔桌飛拋食材，極限協作挑戰 (1P: 2盤 / 2P: 3盤)</p>
-                </div>
-                <span class="map-badge">點擊切換</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 0.5: Mode Selection (Hidden once match has started) -->
-          <div class="guide-section mode-select-section" id="mode-select-section">
-            <h3 class="section-title">👥 第二步：請選擇遊玩模式並開始遊戲</h3>
-            <div class="mode-select-grid">
-              <div class="mode-card" id="mode-select-1p">
-                <div class="mode-icon">🐰</div>
-                <div class="mode-info">
-                  <h4>1P 單人修練模式 (點擊直接開始)</h4>
-                  <p>玉兔大廚掌控全場 (WASD / 方向鍵 + Space 拿放拋 + E 切洗)</p>
-                </div>
-                <span class="mode-badge start-badge">直接開始 ➔</span>
-              </div>
-              <div class="mode-card" id="mode-select-2p">
-                <div class="mode-icon">🪓</div>
-                <div class="mode-info">
-                  <h4>2P 雙人同機協作模式</h4>
-                  <p>1P 玉兔 (WASD+Space+E) + 2P 吳剛 (方向鍵+K+L)</p>
-                </div>
-                <span class="mode-badge">輸入 2P 暱稱 ➔</span>
-              </div>
-            </div>
-          </div>
-
           <!-- Section 1: Visual 3-Ingredient Flowcharts -->
           <div class="guide-section">
             <h3 class="section-title">🥩 3 大食材圖解處理全流程</h3>
@@ -252,7 +282,7 @@
         </div>
 
         <div class="modal-footer">
-          <button id="btn-tutorial-start" class="btn-primary start-btn">開始 1P 單人修練 (Space / Enter)</button>
+          <button id="btn-tutorial-start" class="btn-primary start-btn">返回 (Space / Enter / Esc)</button>
         </div>
       </div>
     </div>
@@ -327,7 +357,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button id="btn-leaderboard-confirm" class="btn-primary">返回廚房</button>
+          <button id="btn-leaderboard-confirm" class="btn-primary">返回</button>
         </div>
       </div>
     </div>
@@ -358,9 +388,10 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer dual-footer">
-          <button id="btn-settle-restart" class="btn-primary">再挑戰一局 🔄</button>
-          <button id="btn-settle-view-leaderboard" class="btn-secondary">查看排行榜 🏆</button>
+        <div class="modal-footer triple-footer">
+          <button id="btn-settle-home" class="btn-primary">返回主頁 🏠</button>
+          <button id="btn-settle-restart" class="btn-secondary">再挑戰一局 🔄</button>
+          <button id="btn-settle-view-leaderboard" class="btn-ghost">查看排行榜 🏆</button>
         </div>
       </div>
     </div>

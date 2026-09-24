@@ -73,6 +73,8 @@ export class GameWorld {
     if (this.timeRemaining <= 0) {
       this.timeRemaining = 0;
       this.isGameOver = true;
+      this.orderManager.activeOrders = [];
+      return;
     }
 
     // 2. Process Player 1 Movement
