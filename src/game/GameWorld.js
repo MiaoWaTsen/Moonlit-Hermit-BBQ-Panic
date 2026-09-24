@@ -10,7 +10,7 @@ import { TILE_TYPES, ITEM_TYPES } from '../core/Constants.js';
 export class GameWorld {
   constructor() {
     this.mapGrid = new MapGrid();
-    this.player1 = new Player('p1', '月白之隱 (玉兔大廚)', 7, 5, '🐰', '#ffd700');
+    this.player1 = new Player('p1', '月白之隱 (玉兔大廚)', 3, 3, '🐰', '#ffd700');
     this.players = [this.player1];
     this.interactionPrompt = null;
     
