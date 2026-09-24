@@ -10,8 +10,8 @@ import { createClient } from '@supabase/supabase-js';
 export class LeaderboardManager {
   constructor() {
     this.prefix = 'moonlit_bbq_lb';
-    this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    this.supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    this.supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     
     this.supabase = null;
     if (this.supabaseUrl && this.supabaseAnonKey) {
