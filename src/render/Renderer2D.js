@@ -54,15 +54,20 @@ export class Renderer2D {
       }
     }
 
-    // 5. Draw Flying Airborne Items
+    // 5. Draw Dynamic Floating Prompt Following Player
+    if (world.interactionPrompt) {
+      this.renderInteractionPrompt(world.player1, world.interactionPrompt);
+    }
+
+    // 6. Draw Flying Airborne Items
     for (const flying of world.flyingItems) {
       flying.render(ctx);
     }
 
-    // 6. Draw Progress Bars (Cutting / Cooking / Washing)
+    // 7. Draw Progress Bars (Cutting / Cooking / Washing)
     this.renderStationProgressBars(world.mapGrid);
 
-    // 7. Draw Particle System
+    // 8. Draw Particle System
     world.particleSystem.render(ctx);
   }
 
@@ -561,6 +566,61 @@ export class Renderer2D {
       ctx.textBaseline = 'middle';
       ctx.fillText(item.getEmojiIcon(), 0, 1);
     }
+
+    ctx.restore();
+  }
+
+  renderInteractionPrompt(player, prompt) {
+    const ctx = this.ctx;
+    ctx.save();
+
+    const cx = player.x;
+    const cy = player.y - player.radius - (player.heldItem ? 52 : 32);
+
+    ctx.font = 'bold 11px "Noto Sans TC", sans-serif';
+    const keyBadgeText = prompt.key;
+    const actionText = ' ' + prompt.text;
+    
+    ctx.font = 'bold 10px sans-serif';
+    const keyWidth = ctx.measureText(keyBadgeText).width + 10;
+    ctx.font = 'bold 11px "Noto Sans TC", sans-serif';
+    const actionWidth = ctx.measureText(actionText).width + 4;
+    
+    const totalWidth = keyWidth + actionWidth + 12;
+    const boxHeight = 22;
+    const startX = cx - totalWidth / 2;
+    const startY = cy - boxHeight / 2;
+
+    // Background Bubble
+    ctx.fillStyle = 'rgba(10, 16, 30, 0.94)';
+    ctx.beginPath();
+    ctx.roundRect(startX, startY, totalWidth, boxHeight, 7);
+    ctx.fill();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+
+    // Key Badge (Gold Pill)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.roundRect(startX + 4, startY + 3, keyWidth, boxHeight - 6, 4);
+    ctx.fill();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(keyBadgeText, startX + 4 + keyWidth / 2, startY + boxHeight / 2 + 1);
+
+    // Prompt Text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(actionText, startX + 6 + keyWidth, startY + boxHeight / 2 + 1);
 
     ctx.restore();
   }

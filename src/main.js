@@ -39,7 +39,6 @@ class App {
     this.renderer = new Renderer2D(this.canvas);
     
     // UI Elements
-    this.promptEl = document.getElementById('interaction-prompt');
     this.hudTimerEl = document.getElementById('hud-timer');
     this.hudScoreEl = document.getElementById('hud-score');
     this.hudComboEl = document.getElementById('hud-combo');
@@ -582,7 +581,6 @@ class App {
     if (this.hudComboEl) this.hudComboEl.textContent = `x${this.gameWorld.combo.toFixed(1)}`;
 
     this.syncOrderTicketsDOM();
-    this.updateHUDPrompt();
   }
 
   syncOrderTicketsDOM() {
@@ -637,24 +635,10 @@ class App {
 
       const fill = document.getElementById(`timer-fill-${order.id}`);
       if (fill) {
-        const pct = Math.max(0, Math.min(100, (order.remainingTime / order.totalPatience) * 100));
+        const pct = Math.max(0, Math.min(100, (order.timeRemaining / order.maxTime) * 100));
         fill.style.width = `${pct}%`;
         fill.className = pct > 50 ? 'order-timer-fill' : pct > 25 ? 'order-timer-fill warning' : 'order-timer-fill danger';
       }
-    }
-  }
-
-  updateHUDPrompt() {
-    if (!this.promptEl) return;
-    const prompt = this.gameWorld.interactionPrompt;
-    if (prompt) {
-      this.promptEl.classList.remove('hidden');
-      const badge = this.promptEl.querySelector('.key-badge');
-      const txt = this.promptEl.querySelector('.prompt-text');
-      if (badge) badge.textContent = prompt.key;
-      if (txt) txt.textContent = prompt.text;
-    } else {
-      this.promptEl.classList.add('hidden');
     }
   }
 }
