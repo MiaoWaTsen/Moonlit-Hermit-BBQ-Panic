@@ -6,20 +6,20 @@ import { ITEM_TYPES } from '../core/Constants.js';
 
 export const RECIPES = [
   {
+    id: 'recipe_veggie_skewer',
+    name: '炙烤鮮甜青椒',
+    icon: '🫑',
+    required: [ITEM_TYPES.COOKED_VEGGIE],
+    points: 160,
+    timeLimit: 80 // generous 80s
+  },
+  {
     id: 'recipe_toast_beef',
     name: '經典炭烤肉蛋吐司',
     icon: '🥪',
     required: [ITEM_TYPES.COOKED_TOAST, ITEM_TYPES.COOKED_BEEF],
     points: 250,
-    timeLimit: 55
-  },
-  {
-    id: 'recipe_veggie_skewer',
-    name: '炙烤鮮甜青椒串',
-    icon: '🍢',
-    required: [ITEM_TYPES.COOKED_VEGGIE],
-    points: 160,
-    timeLimit: 45
+    timeLimit: 90 // generous 90s
   },
   {
     id: 'recipe_beef_veggie',
@@ -27,7 +27,7 @@ export const RECIPES = [
     icon: '🍖',
     required: [ITEM_TYPES.COOKED_BEEF, ITEM_TYPES.COOKED_VEGGIE],
     points: 320,
-    timeLimit: 60
+    timeLimit: 105 // generous 105s
   },
   {
     id: 'recipe_grand_feast',
@@ -35,7 +35,7 @@ export const RECIPES = [
     icon: '✨',
     required: [ITEM_TYPES.COOKED_TOAST, ITEM_TYPES.COOKED_BEEF, ITEM_TYPES.COOKED_VEGGIE],
     points: 500,
-    timeLimit: 75
+    timeLimit: 125 // generous 125s
   }
 ];
 

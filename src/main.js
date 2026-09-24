@@ -189,7 +189,7 @@ class App {
 
         const ingredientBadges = order.recipe.required.map(t => {
           if (t.includes('BEEF')) return '🥩';
-          if (t.includes('VEGGIE')) return '🍢';
+          if (t.includes('VEGGIE')) return '🫑';
           if (t.includes('TOAST')) return '🍞';
           return '✨';
         }).join(' ');

@@ -12,7 +12,7 @@ export class Player {
     this.y = (startGridY + 0.5) * TILE_SIZE;
     this.vx = 0;
     this.vy = 0;
-    this.speed = 220; // Pixels per second
+    this.speed = 250; // Pixels per second (snappy & agile)
     this.radius = TILE_SIZE * 0.32; // Collision circle radius
     
     this.facing = DIRECTIONS.DOWN;
