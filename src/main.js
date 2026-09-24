@@ -1,12 +1,13 @@
 /**
  * Main Application Entry Point
- * Complete Multi-Map, Multi-Mode, and Game Home Screen Implementation:
+ * Complete Multi-Map, Multi-Mode, Game Home Screen & Controls Guide Implementation:
  * 1. Initial Guest Nickname Entry -> Dedicated Home Screen (大廳/主頁)
- * 2. Home Screen: Map Selection (月宮庭院 / 桂樹林天台), 1P / 2P Launch, Cookbook, Leaderboards, Edit Name
- * 3. In-Game Map & Mode Switching Locked During Match
- * 4. Timer Expiry (Game Over): Clears all active orders immediately
- * 5. Settlement Screen: Return to Home (返回主頁 🏠), Restart (再挑戰一局 🔄), Leaderboards (查看排行榜 🏆)
- * 6. Separate Leaderboards for Map 1 / Map 2 and 1P / 2P (Default Empty)
+ * 2. Home Screen: Map Selection (月宮庭院 / 桂樹林天台), 1P / 2P Launch, Controls Guide, Cookbook, Leaderboards, Edit Name
+ * 3. Match Duration 3:20 (200s), with First 20s as Prep Phase (備菜備料時間，顯示動態倒數橫幅)
+ * 4. In-Game Map & Mode Switching Locked During Match
+ * 5. Timer Expiry (Game Over): Clears all active orders immediately
+ * 6. Settlement Screen: Return to Home (返回主頁 🏠), Restart (再挑戰一局 🔄), Leaderboards (查看排行榜 🏆)
+ * 7. Separate Leaderboards for Map 1 / Map 2 and 1P / 2P (Default Empty)
  */
 
 import { InputManager } from './core/InputManager.js';
@@ -63,8 +64,14 @@ class App {
     this.homeMap2 = document.getElementById('home-map-2');
     this.homeStart1PBtn = document.getElementById('btn-home-start-1p');
     this.homeStart2PBtn = document.getElementById('btn-home-start-2p');
+    this.homeControlsBtn = document.getElementById('btn-home-controls');
     this.homeRecipeBtn = document.getElementById('btn-home-recipe');
     this.homeLeaderboardBtn = document.getElementById('btn-home-leaderboard');
+
+    // 0.5 Controls Guide Modal
+    this.controlsModal = document.getElementById('controls-modal');
+    this.controlsCloseBtn = document.getElementById('btn-controls-close');
+    this.controlsConfirmBtn = document.getElementById('btn-controls-confirm');
 
     // 1. Auth / Nickname Modal
     this.authModal = document.getElementById('auth-modal');
@@ -117,6 +124,7 @@ class App {
     this.initAudioToggle();
     this.initAuthModal();
     this.initHomeModal();
+    this.initControlsModal();
     this.initTutorialModal();
     this.initPlayer2Modal();
     this.initLeaderboardModal();
@@ -166,6 +174,7 @@ class App {
 
     // Hide other popups
     this.authModal?.classList.add('hidden');
+    this.controlsModal?.classList.add('hidden');
     this.tutorialModal?.classList.add('hidden');
     this.player2Modal?.classList.add('hidden');
     this.gameoverModal?.classList.add('hidden');
@@ -254,6 +263,13 @@ class App {
       this.openEditNicknameModal();
     });
 
+    // Controls Guide Button
+    this.homeControlsBtn?.addEventListener('click', () => {
+      this.controlsModal?.classList.remove('hidden');
+      this.isPausedForModal = true;
+      this.gameWorld.soundManager.playDrop();
+    });
+
     // Cookbook Guidebook Button
     this.homeRecipeBtn?.addEventListener('click', () => {
       this.tutorialModal?.classList.remove('hidden');
@@ -272,6 +288,25 @@ class App {
     });
   }
 
+  // Step 0.5: Controls & Keybinding Guide Modal
+  initControlsModal() {
+    const closeControls = () => {
+      this.controlsModal?.classList.add('hidden');
+      if (this.gameStarted && !this.gameWorld.isGameOver) {
+        this.isPausedForModal = false;
+        this.inputManager.reset();
+        this.lastTime = performance.now();
+        this.canvas?.focus();
+        this.gameWorld.soundManager.playPickup();
+      } else {
+        this.openHomeScreen();
+      }
+    };
+
+    this.controlsCloseBtn?.addEventListener('click', closeControls);
+    this.controlsConfirmBtn?.addEventListener('click', closeControls);
+  }
+
   // Step 2: Cookbook / Recipe Guidebook Modal
   initTutorialModal() {
     const closeCookbook = () => {
@@ -283,7 +318,6 @@ class App {
         this.canvas?.focus();
         this.gameWorld.soundManager.playPickup();
       } else {
-        // If from Home Screen, return to Home Screen
         this.openHomeScreen();
       }
     };
@@ -314,7 +348,7 @@ class App {
     });
   }
 
-  // Core Game Start Dispatcher
+  // Core Game Start Dispatcher (3:20 match duration with 20s prep time)
   startGame(is2P) {
     this.gameStarted = true;
     this.is2PMode = is2P;
@@ -324,6 +358,7 @@ class App {
 
     // Hide all popups
     this.homeModal?.classList.add('hidden');
+    this.controlsModal?.classList.add('hidden');
     this.authModal?.classList.add('hidden');
     this.tutorialModal?.classList.add('hidden');
     this.player2Modal?.classList.add('hidden');
@@ -340,9 +375,16 @@ class App {
     this.renderedOrderIds.clear();
     this.hasRecordedGameOver = false;
 
-    // Reset order tickets HUD
+    // Reset order tickets HUD to prep phase banner
     if (this.ordersContainer) {
-      this.ordersContainer.innerHTML = '<div class="order-placeholder">等待神仙顧客點餐中...</div>';
+      this.ordersContainer.innerHTML = `
+        <div class="prep-phase-banner">
+          <span class="prep-pulse-dot"></span>
+          <span class="prep-icon">⏳</span>
+          <strong>備菜備料時間（剩餘 20 秒）</strong>
+          <span class="prep-hint">請先切肉切菜熱烤爐！03:00 正式點餐</span>
+        </div>
+      `;
     }
 
     // Update HUD labels
@@ -498,7 +540,7 @@ class App {
     this.hasRecordedGameOver = true;
     this.isPausedForModal = true;
 
-    // Requirement: Clear all active orders immediately when time is up
+    // Clear all active orders immediately when time is up
     this.gameWorld.orderManager.activeOrders = [];
     this.renderedOrderIds.clear();
     if (this.ordersContainer) {
@@ -541,8 +583,9 @@ class App {
       }
 
       const isTutorialOpen = !this.tutorialModal?.classList.contains('hidden');
+      const isControlsOpen = !this.controlsModal?.classList.contains('hidden');
 
-      // Toggle or Close Cookbook manual with H, R, Space, Enter, Escape
+      // Toggle or Close Cookbook manual with H, R
       if (e.code === 'KeyH' || e.code === 'KeyR') {
         if (isTutorialOpen) {
           if (this.gameStarted && !this.gameWorld.isGameOver) {
@@ -565,6 +608,18 @@ class App {
       } else if (isTutorialOpen && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
         e.preventDefault();
         this.tutorialModal?.classList.add('hidden');
+        if (this.gameStarted && !this.gameWorld.isGameOver) {
+          this.isPausedForModal = false;
+          this.inputManager.reset();
+          this.lastTime = performance.now();
+          this.gameWorld.soundManager.playPickup();
+          this.canvas?.focus();
+        } else {
+          this.openHomeScreen();
+        }
+      } else if (isControlsOpen && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
+        e.preventDefault();
+        this.controlsModal?.classList.add('hidden');
         if (this.gameStarted && !this.gameWorld.isGameOver) {
           this.isPausedForModal = false;
           this.inputManager.reset();
@@ -660,6 +715,7 @@ class App {
   syncOrderTicketsDOM() {
     if (!this.ordersContainer) return;
 
+    // 1. Game Over State
     if (this.gameWorld.isGameOver) {
       const cards = this.ordersContainer.querySelectorAll('.order-card');
       cards.forEach(card => card.remove());
@@ -671,8 +727,31 @@ class App {
       return;
     }
 
+    // 2. Prep Time Phase (First 20 seconds, time > 180s)
+    if (this.gameWorld.isPrepPhase || this.gameWorld.timeRemaining > 180) {
+      const cards = this.ordersContainer.querySelectorAll('.order-card');
+      cards.forEach(card => card.remove());
+      this.renderedOrderIds.clear();
+
+      const prepSecs = Math.max(0, Math.ceil(this.gameWorld.timeRemaining - 180));
+      this.ordersContainer.innerHTML = `
+        <div class="prep-phase-banner">
+          <span class="prep-pulse-dot"></span>
+          <span class="prep-icon">⏳</span>
+          <strong>備菜備料時間（剩餘 ${prepSecs} 秒）</strong>
+          <span class="prep-hint">請先切肉切菜熱烤爐！03:00 正式點餐</span>
+        </div>
+      `;
+      return;
+    }
+
+    // 3. Normal Active Orders Phase
     const activeOrders = this.gameWorld.orderManager.activeOrders;
     const activeIdSet = new Set(activeOrders.map(o => o.id));
+
+    // Remove prep phase banner if present
+    const prepBanner = this.ordersContainer.querySelector('.prep-phase-banner');
+    if (prepBanner) prepBanner.remove();
 
     const existingCards = this.ordersContainer.querySelectorAll('.order-card');
     existingCards.forEach(card => {

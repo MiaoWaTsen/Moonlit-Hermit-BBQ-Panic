@@ -150,12 +150,103 @@
 
         <!-- Section 3: Quick Navigation -->
         <div class="home-nav-row">
+          <button id="btn-home-controls" class="home-nav-btn">
+            <span class="nav-icon">🎮</span> 操作按鍵教學
+          </button>
           <button id="btn-home-recipe" class="home-nav-btn">
             <span class="nav-icon">📖</span> 查看食譜指南
           </button>
           <button id="btn-home-leaderboard" class="home-nav-btn">
             <span class="nav-icon">🏆</span> 中秋廚神天梯榜
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 0.5 Controls & Keybinding Guide Modal -->
+    <div id="controls-modal" class="modal-backdrop hidden">
+      <div class="modal-card controls-card glass-panel">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span class="modal-icon">🎮</span>
+            <h2>大廚操作按鍵指南 <small>鍵盤操作 / 雙人協作 / 備菜時間說明</small></h2>
+          </div>
+          <button id="btn-controls-close" class="modal-close-btn">&times;</button>
+        </div>
+
+        <div class="modal-body controls-body">
+          <!-- Timing & Phase Alert Box -->
+          <div class="controls-phase-box">
+            <div class="phase-title">⏳ 每局時間 3:20 • 前 20 秒「備菜備料時間」說明</div>
+            <p>每局共 <strong>3 分 20 秒</strong>。遊戲開始的前 <strong>20 秒為備菜期</strong>，神仙顧客尚未點餐（上方訂單欄會顯示備菜倒數）。</p>
+            <p>💡 <strong>大廚致勝關鍵</strong>：利用前 20 秒迅速將生牛肉、生青椒切片，預熱烤爐，並準備好乾淨餐盤！<strong>03:00</strong> 訂單將正式湧入！</p>
+          </div>
+
+          <!-- Controls 1P vs 2P Grid -->
+          <div class="controls-grid">
+            <!-- 1P Box -->
+            <div class="controls-box p1-controls-box">
+              <div class="controls-box-header">
+                <span class="box-icon">🐰</span>
+                <h3>1P 大廚 (玉兔 / 單人)</h3>
+              </div>
+              <ul class="key-guide-list">
+                <li>
+                  <div class="key-tags"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 或 <kbd>方向鍵</kbd></div>
+                  <div class="key-desc"><strong>移動</strong> 大廚身形走位</div>
+                </li>
+                <li>
+                  <div class="key-tags"><kbd>Space 空白鍵</kbd> <small>(短按)</small></div>
+                  <div class="key-desc"><strong>拿取 / 放置 / 裝盤 / 出餐</strong></div>
+                </li>
+                <li>
+                  <div class="key-tags"><kbd>Space 空白鍵</kbd> <small>(長按放開)</small></div>
+                  <div class="key-desc"><strong>蓄力飛拋食材 🚀</strong>（可隔桌傳遞）</div>
+                </li>
+                <li>
+                  <div class="key-tags"><kbd>E</kbd> 或 <kbd>G</kbd></div>
+                  <div class="key-desc"><strong>切菜備料 (長按) / 水槽洗碗 (長按)</strong> / 出餐</div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- 2P Box -->
+            <div class="controls-box p2-controls-box">
+              <div class="controls-box-header">
+                <span class="box-icon">🪓</span>
+                <h3>2P 協作 (吳剛大廚 / 雙人同機)</h3>
+              </div>
+              <ul class="key-guide-list">
+                <li>
+                  <div class="key-tags"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 方向鍵</div>
+                  <div class="key-desc"><strong>移動</strong> 吳剛走位</div>
+                </li>
+                <li>
+                  <div class="key-tags"><kbd>K</kbd> <small>(短按)</small></div>
+                  <div class="key-desc"><strong>拿取 / 放置 / 裝盤 / 出餐</strong></div>
+                </li>
+                <li>
+                  <div class="key-tags"><kbd>K</kbd> <small>(長按放開)</small></div>
+                  <div class="key-desc"><strong>蓄力飛拋食材 🚀</strong>（傳給玉兔）</div>
+                </li>
+                <li>
+                  <div class="key-tags"><kbd>L</kbd></div>
+                  <div class="key-desc"><strong>切菜備料 (長按) / 水槽洗碗 (長按)</strong> / 出餐</div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Shortcuts & Mobile Tip -->
+          <div class="controls-shortcuts-row">
+            <div class="shortcut-pill"><kbd>H</kbd> 或 <kbd>R</kbd> 隨時查看食譜指南</div>
+            <div class="shortcut-pill"><kbd>Esc</kbd> / <kbd>Space</kbd> 快速關閉彈窗</div>
+            <div class="shortcut-pill">📱 手機支援虛擬搖桿與觸控切/拿按鈕</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-controls-confirm" class="btn-primary">返回</button>
         </div>
       </div>
     </div>

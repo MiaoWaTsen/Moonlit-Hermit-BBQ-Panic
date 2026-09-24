@@ -39,8 +39,10 @@ export class GameWorld {
     // Game stats
     this.score = 0;
     this.combo = 1.0;
-    this.timeRemaining = 180; // 3 minutes
+    this.timeRemaining = 200; // 3 minutes 20 seconds (200s)
     this.isGameOver = false;
+    this.isPrepPhase = true; // First 20s is prep time phase
+    this.hasSpawnedInitialOrders = false;
 
     this.initWorld();
   }
@@ -57,12 +59,25 @@ export class GameWorld {
   }
 
   initWorld() {
-    this.orderManager.initOrders();
+    this.hasSpawnedInitialOrders = false;
+    if (this.timeRemaining > 180) {
+      this.isPrepPhase = true;
+      this.orderManager.activeOrders = [];
+    } else {
+      this.isPrepPhase = false;
+      this.orderManager.initOrders();
+      this.hasSpawnedInitialOrders = true;
+    }
+
     this.orderManager.onOrderExpired = (order) => {
       this.soundManager.playBuzzer();
       this.combo = 1.0;
       this.score = Math.max(0, this.score - 50);
     };
+  }
+
+  getPrepTimeRemaining() {
+    return Math.max(0, Math.ceil(this.timeRemaining - 180));
   }
 
   update(dt, inputManager) {
@@ -75,6 +90,20 @@ export class GameWorld {
       this.isGameOver = true;
       this.orderManager.activeOrders = [];
       return;
+    }
+
+    // 1.5 Handle Prep Phase Transition (at 03:00 / 180s)
+    if (this.timeRemaining > 180) {
+      this.isPrepPhase = true;
+    } else {
+      this.isPrepPhase = false;
+      if (!this.hasSpawnedInitialOrders) {
+        this.hasSpawnedInitialOrders = true;
+        this.orderManager.initOrders();
+        this.soundManager.playOrderSuccess();
+        const centerX = (this.mapGrid.cols * TILE_SIZE) / 2;
+        this.showFloatingMessage('🔥 宴會正式開始！神仙顧客開始點餐 🛎️', centerX, 70, '#ffd700');
+      }
     }
 
     // 2. Process Player 1 Movement
@@ -132,8 +161,10 @@ export class GameWorld {
     // 8. Update Dirty Dish Return Queue
     this.updateDirtyDishReturns(dt);
 
-    // 9. Update Orders
-    this.orderManager.update(dt);
+    // 9. Update Orders (Only active during order phase)
+    if (!this.isPrepPhase) {
+      this.orderManager.update(dt);
+    }
 
     // 10. Update Particles
     this.particleSystem.update(dt);
