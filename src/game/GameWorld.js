@@ -208,12 +208,16 @@ export class GameWorld {
         const worldX = targetCenterX;
         const worldY = targetCenterY;
 
-        if (Math.random() < 0.2) this.soundManager.playWash();
-        this.particleSystem.emit(worldX, worldY, 'sparkle', 1);
+        if (Math.random() < 0.25) this.soundManager.playWash();
+        this.particleSystem.emit(worldX, worldY, 'sparkle', 2);
 
         if (washed) {
+          itemOnCounter.type = ITEM_TYPES.PLATE;
+          itemOnCounter.ingredients = [];
+          this.mapGrid.setWashProgress(target.x, target.y, 0);
           this.soundManager.playPickup();
-          this.particleSystem.emit(worldX, worldY, 'sparkle', 10);
+          this.particleSystem.emit(worldX, worldY, 'sparkle', 18);
+          this.showFloatingMessage('✨ 餐盤已洗淨！🍽️', worldX, worldY - 12, '#00e5ff');
         }
       }
     }
