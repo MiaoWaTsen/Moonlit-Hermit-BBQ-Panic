@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>月白之隱：中秋烤肉大作戰 | Moonlit Hermit BBQ Panic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Outfit:wght@400;600;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Header / HUD Top Bar -->
+    <header id="game-hud" class="glass-panel">
+      <div class="hud-left">
+        <div class="brand-title">
+          <span class="moon-icon">🌕</span>
+          <span class="title-text">月白之隱 <small>中秋烤肉大作戰</small></span>
+        </div>
+        <div class="player-badge" id="hud-player-badge">
+          <span class="player-avatar">🐰</span>
+          <span class="player-name" id="hud-player-name">訪客大廚</span>
+        </div>
+      </div>
+
+      <!-- Live Order Tickets Area -->
+      <div class="hud-center">
+        <div id="order-tickets-container" class="order-tickets-bar">
+          <!-- Dynamic Order Cards will mount here -->
+          <div class="order-placeholder">等待訂單中...</div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="stat-box time-box">
+          <span class="stat-label">剩餘時間</span>
+          <span class="stat-val" id="hud-timer">02:00</span>
+        </div>
+        <div class="stat-box score-box">
+          <span class="stat-label">得分</span>
+          <span class="stat-val highlight" id="hud-score">0</span>
+        </div>
+        <div class="stat-box combo-box">
+          <span class="stat-label">連擊</span>
+          <span class="stat-val" id="hud-combo">x1.0</span>
+        </div>
+        <button id="btn-leaderboard-open" class="icon-btn" title="排行榜">🏆</button>
+        <button id="btn-sound-toggle" class="icon-btn" title="音效切換">🔊</button>
+      </div>
+    </header>
+
+    <!-- Main Game Canvas Container -->
+    <main id="canvas-wrapper">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Interactive floating prompt overlay (Key guide / Station helper) -->
+      <div id="interaction-prompt" class="interaction-prompt hidden">
+        <span class="key-badge">SPACE</span>
+        <span class="prompt-text">拿起食材</span>
+      </div>
+    </main>
+
+    <!-- Controls & Action Helper / Mobile On-Screen Controls -->
+    <div id="mobile-controls" class="mobile-controls hidden">
+      <div id="virtual-joystick-zone" class="joystick-zone">
+        <div id="joystick-base" class="joystick-base">
+          <div id="joystick-thumb" class="joystick-thumb"></div>
+        </div>
+      </div>
+      <div class="action-buttons-group">
+        <button id="btn-mobile-interact" class="action-btn interact-btn">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-label">切/洗</span>
+        </button>
+        <button id="btn-mobile-pickup" class="action-btn pickup-btn">
+          <span class="btn-icon">✋</span>
+          <span class="btn-label">拿/放</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Desktop Key Guidance Bar (Bottom) -->
+    <footer id="desktop-helper-bar" class="helper-bar">
+      <div class="key-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 或 <kbd>方向鍵</kbd> 移動</div>
+      <div class="key-hint"><kbd>Space</kbd> 或 <kbd>F</kbd> 拿取 / 放置食材與盤子</div>
+      <div class="key-hint"><kbd>E</kbd> 或 <kbd>G</kbd> 備料切菜 / 水槽洗碗</div>
+      <div class="key-hint mode-indicator" id="game-mode-indicator">1P 單人修練模式</div>
+    </footer>
+  </div>
+
+  <!-- Entry Script -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
