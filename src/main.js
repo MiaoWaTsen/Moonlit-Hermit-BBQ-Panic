@@ -459,11 +459,7 @@ class App {
     // Update Header Tag
     const headerTag = document.getElementById('lb-header-tag');
     if (headerTag) {
-      if (this.leaderboardManager.isCloudEnabled()) {
-        headerTag.innerHTML = '🌐 <span style="color: #6ee7b7;">全球即時榜 (Supabase 雲端)</span>';
-      } else {
-        headerTag.innerHTML = '💾 <span style="color: #cbd5e1;">本機排行榜</span>';
-      }
+      headerTag.innerHTML = '💾 <span style="color: #cbd5e1;">本機榮譽榜</span>';
     }
 
     // Update Map Tabs Active State
@@ -488,55 +484,41 @@ class App {
       }
     }
 
-    const renderScores = (scores) => {
-      if (!scores || scores.length === 0) {
-        if (this.leaderboardTable) this.leaderboardTable.classList.add('hidden');
-        if (this.leaderboardEmpty) {
-          this.leaderboardEmpty.classList.remove('hidden');
-          this.leaderboardEmpty.textContent = `目前【${this.getMapDisplayName(mapId)} (${mode === '2p' ? '2P雙人' : '1P單人'})】尚無挑戰紀錄，快來挑戰成為首位登頂的大廚！🌕`;
-        }
-        this.leaderboardTbody.innerHTML = '';
-        return;
+    const scores = this.leaderboardManager.getScores(mapId, mode);
+
+    if (scores.length === 0) {
+      if (this.leaderboardTable) this.leaderboardTable.classList.add('hidden');
+      if (this.leaderboardEmpty) {
+        this.leaderboardEmpty.classList.remove('hidden');
+        this.leaderboardEmpty.textContent = `目前【${this.getMapDisplayName(mapId)} (${mode === '2p' ? '2P雙人' : '1P單人'})】尚無挑戰紀錄，快來挑戰成為首位登頂的大廚！🌕`;
       }
-
-      if (this.leaderboardTable) this.leaderboardTable.classList.remove('hidden');
-      if (this.leaderboardEmpty) this.leaderboardEmpty.classList.add('hidden');
-
-      let html = '';
-      scores.forEach((entry, idx) => {
-        let rankClass = '';
-        let medal = `#${idx + 1}`;
-        if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 冠軍'; }
-        else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 亞軍'; }
-        else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 季軍'; }
-
-        html += `
-          <tr>
-            <td class="${rankClass}">${medal}</td>
-            <td><strong>${entry.name}</strong></td>
-            <td class="rank-gold">${Number(entry.score).toLocaleString()} 分</td>
-            <td>${entry.combo || 'x1.0'}</td>
-            <td>${entry.date || '-'}</td>
-          </tr>
-        `;
-      });
-
-      this.leaderboardTbody.innerHTML = html;
-    };
-
-    // 1. Instant render from local cache
-    const initialScores = this.leaderboardManager.getScores(mapId, mode);
-    renderScores(initialScores);
-
-    // 2. If cloud is enabled, fetch latest from Supabase asynchronously
-    if (this.leaderboardManager.isCloudEnabled()) {
-      this.leaderboardManager.fetchCloudScores(mapId, mode).then((cloudScores) => {
-        // Only update if current view is still matching
-        if (this.currentLbMap === mapId && this.currentLbMode === mode) {
-          renderScores(cloudScores);
-        }
-      }).catch((e) => console.warn('[Leaderboard] Async fetch failed:', e));
+      this.leaderboardTbody.innerHTML = '';
+      return;
     }
+
+    if (this.leaderboardTable) this.leaderboardTable.classList.remove('hidden');
+    if (this.leaderboardEmpty) this.leaderboardEmpty.classList.add('hidden');
+
+    let html = '';
+    scores.forEach((entry, idx) => {
+      let rankClass = '';
+      let medal = `#${idx + 1}`;
+      if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 冠軍'; }
+      else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 亞軍'; }
+      else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 季軍'; }
+
+      html += `
+        <tr>
+          <td class="${rankClass}">${medal}</td>
+          <td><strong>${entry.name}</strong></td>
+          <td class="rank-gold">${Number(entry.score).toLocaleString()} 分</td>
+          <td>${entry.combo || 'x1.0'}</td>
+          <td>${entry.date || '-'}</td>
+        </tr>
+      `;
+    });
+
+    this.leaderboardTbody.innerHTML = html;
   }
 
   initGameOverModal() {
