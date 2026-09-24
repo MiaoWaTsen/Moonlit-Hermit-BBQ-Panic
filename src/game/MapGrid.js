@@ -1,19 +1,22 @@
 /**
  * MapGrid: Manages 2D grid tiles, station types, and stationary items on counters
- * Compact 13x8 Cozy Layout: Halves travel distance for smooth high-efficiency play
+ * Supports Multiple Maps:
+ * - map1: 「月宮庭院」(Moon Palace Courtyard) - Compact Cozy Kitchen
+ * - map2: 「桂樹林天台」(Osmanthus Grove Rooftop) - Split Co-op Toss Kitchen
  */
 
 import { MAP_COLS, MAP_ROWS, TILE_TYPES, ITEM_TYPES } from '../core/Constants.js';
 import { Item } from './Item.js';
 
 export class MapGrid {
-  constructor(is2P = false) {
+  constructor(is2P = false, mapId = 'map1') {
     this.cols = MAP_COLS;
     this.rows = MAP_ROWS;
     this.grid = [];
     this.itemsOnCounters = new Map(); // key: "x,y", value: Item object
     this.washProgress = new Map();     // key: "x,y", value: 0.0 to 1.0
     this.is2P = is2P;
+    this.mapId = mapId;
     
     this.initMap();
   }
@@ -25,7 +28,9 @@ export class MapGrid {
     // B = CRATE_BEEF, V = CRATE_VEGGIE, T = CRATE_TOAST
     // K = CUTTING_BOARD, G = GRILL
     // S = SINK, D = DELIVERY, X = TRASH
-    const mapLayout = [
+    
+    // Map 1: 月宮庭院 (Moon Palace Courtyard)
+    const map1Layout = [
       ['W', 'D', 'D', 'C', 'C', 'C', 'K', 'K', 'C', 'K', 'C', 'X', 'W'],
       ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
       ['B', 'F', 'F', 'F', 'C', 'C', 'C', 'C', 'F', 'F', 'F', 'F', 'T'],
@@ -35,6 +40,20 @@ export class MapGrid {
       ['W', 'G', 'G', 'G', 'C', 'S', 'S', 'C', 'G', 'G', 'G', 'C', 'W'],
       ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
     ];
+
+    // Map 2: 桂樹林天台 (Osmanthus Grove Rooftop - Split Co-op Arena)
+    const map2Layout = [
+      ['W', 'K', 'K', 'C', 'C', 'C', 'C', 'C', 'D', 'D', 'C', 'X', 'W'],
+      ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
+      ['B', 'F', 'F', 'F', 'F', 'C', 'C', 'F', 'F', 'F', 'F', 'F', 'G'],
+      ['B', 'F', 'F', 'F', 'F', 'C', 'C', 'F', 'F', 'F', 'F', 'F', 'G'],
+      ['V', 'F', 'F', 'F', 'F', 'C', 'C', 'F', 'F', 'F', 'F', 'F', 'G'],
+      ['V', 'F', 'F', 'F', 'F', 'C', 'C', 'F', 'F', 'F', 'F', 'F', 'S'],
+      ['T', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'S'],
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
+    ];
+
+    const chosenLayout = this.mapId === 'map2' ? map2Layout : map1Layout;
 
     const typeMapping = {
       'W': TILE_TYPES.WALL,
@@ -54,18 +73,28 @@ export class MapGrid {
     for (let y = 0; y < this.rows; y++) {
       const row = [];
       for (let x = 0; x < this.cols; x++) {
-        const symbol = mapLayout[y]?.[x] || 'W';
+        const symbol = chosenLayout[y]?.[x] || 'W';
         const type = typeMapping[symbol] || TILE_TYPES.FLOOR;
         row.push(type);
       }
       this.grid.push(row);
     }
 
-    // 1P gets 2 clean plates (4,0) and (5,0); 2P gets 3 clean plates (3,0), (4,0), (5,0)
-    this.setItemAt(4, 0, Item.create(ITEM_TYPES.PLATE));
-    this.setItemAt(5, 0, Item.create(ITEM_TYPES.PLATE));
-    if (this.is2P) {
-      this.setItemAt(3, 0, Item.create(ITEM_TYPES.PLATE));
+    // Plate Placement based on Map
+    if (this.mapId === 'map2') {
+      // Map 2: Place on central bridge countertops
+      this.setItemAt(5, 2, Item.create(ITEM_TYPES.PLATE));
+      this.setItemAt(6, 2, Item.create(ITEM_TYPES.PLATE));
+      if (this.is2P) {
+        this.setItemAt(5, 3, Item.create(ITEM_TYPES.PLATE));
+      }
+    } else {
+      // Map 1: 1P gets 2 plates (4,0) & (5,0); 2P gets 3 plates (3,0), (4,0), (5,0)
+      this.setItemAt(4, 0, Item.create(ITEM_TYPES.PLATE));
+      this.setItemAt(5, 0, Item.create(ITEM_TYPES.PLATE));
+      if (this.is2P) {
+        this.setItemAt(3, 0, Item.create(ITEM_TYPES.PLATE));
+      }
     }
   }
 
@@ -103,16 +132,14 @@ export class MapGrid {
     return this.washProgress.get(`${gridX},${gridY}`) || 0;
   }
 
-  advanceWash(gridX, gridY, dt) {
+  setWashProgress(gridX, gridY, progress) {
+    this.washProgress.set(`${gridX},${gridY}`, Math.max(0, Math.min(1.0, progress)));
+  }
+
+  advanceWash(gridX, gridY, dt, washDuration = 1.2) {
     const current = this.getWashProgress(gridX, gridY);
-    const updated = Math.min(1.0, current + dt / 1.2); // Fast snappy washing in 1.2s
-    this.washProgress.set(`${gridX},${gridY}`, updated);
-    
-    if (updated >= 1.0) {
-      this.setItemAt(gridX, gridY, Item.create(ITEM_TYPES.PLATE));
-      this.washProgress.delete(`${gridX},${gridY}`);
-      return true;
-    }
-    return false;
+    const next = current + (dt / washDuration);
+    this.setWashProgress(gridX, gridY, next);
+    return next >= 1.0;
   }
 }

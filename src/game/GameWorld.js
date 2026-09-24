@@ -13,14 +13,18 @@ import { ParticleSystem } from '../render/ParticleSystem.js';
 import { TILE_TYPES, ITEM_TYPES, TILE_SIZE } from '../core/Constants.js';
 
 export class GameWorld {
-  constructor(is2P = false, p1Name = '玉兔大廚', p2Name = '吳剛大廚') {
+  constructor(is2P = false, p1Name = '玉兔大廚', p2Name = '吳剛大廚', mapId = 'map1') {
     this.is2PMode = is2P;
     this.p1Name = p1Name;
     this.p2Name = p2Name;
-    this.mapGrid = new MapGrid(this.is2PMode);
+    this.mapId = mapId;
+    this.mapGrid = new MapGrid(this.is2PMode, this.mapId);
 
-    this.player1 = new Player('p1', this.p1Name, 2, 4, '🐰', '#ffd700');
-    this.player2 = new Player('p2', this.p2Name, 8, 4, '🪓', '#e74c3c');
+    const p1Spawn = this.mapId === 'map2' ? { x: 2, y: 3 } : { x: 2, y: 4 };
+    const p2Spawn = this.mapId === 'map2' ? { x: 10, y: 3 } : { x: 8, y: 4 };
+
+    this.player1 = new Player('p1', this.p1Name, p1Spawn.x, p1Spawn.y, '🐰', '#ffd700');
+    this.player2 = new Player('p2', this.p2Name, p2Spawn.x, p2Spawn.y, '🪓', '#e74c3c');
     
     this.players = this.is2PMode ? [this.player1, this.player2] : [this.player1];
     
@@ -41,13 +45,14 @@ export class GameWorld {
     this.initWorld();
   }
 
-  set2PMode(enabled, p1Name = this.p1Name, p2Name = this.p2Name) {
+  set2PMode(enabled, p1Name = this.p1Name, p2Name = this.p2Name, mapId = this.mapId) {
     this.is2PMode = enabled;
     this.p1Name = p1Name;
     this.p2Name = p2Name;
+    this.mapId = mapId;
     this.player1.name = this.p1Name;
     this.player2.name = this.p2Name;
-    this.mapGrid = new MapGrid(this.is2PMode);
+    this.mapGrid = new MapGrid(this.is2PMode, this.mapId);
     this.players = enabled ? [this.player1, this.player2] : [this.player1];
   }
 

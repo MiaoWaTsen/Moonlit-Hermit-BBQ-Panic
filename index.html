@@ -16,11 +16,11 @@
       <div class="hud-left">
         <div class="brand-title">
           <span class="moon-icon">🌕</span>
-          <span class="title-text">月白之隱 <small>中秋烤肉大作戰</small></span>
+          <span class="title-text">月白之隱 <small id="hud-map-name">月宮庭院</small></span>
         </div>
         <div class="player-badge" id="hud-player-badge">
           <span class="player-avatar">🐰</span>
-          <span class="player-name" id="hud-player-name">訪客大廚</span>
+          <span class="player-name" id="hud-player-name">玉兔大廚</span>
         </div>
       </div>
 
@@ -35,7 +35,7 @@
       <div class="hud-right">
         <div class="stat-box time-box">
           <span class="stat-label">剩餘時間</span>
-          <span class="stat-val" id="hud-timer">02:00</span>
+          <span class="stat-val" id="hud-timer">03:00</span>
         </div>
         <div class="stat-box score-box">
           <span class="stat-label">得分</span>
@@ -115,27 +115,50 @@
       </div>
     </div>
 
-    <!-- 2. Tutorial & Recipe Guidebook Modal Overlay (Second Step: Mode Select & Instructions) -->
+    <!-- 2. Tutorial & Recipe Guidebook Modal Overlay (Second Step: Map & Mode Select + Instructions) -->
     <div id="tutorial-modal" class="modal-backdrop hidden">
       <div class="modal-card cookbook-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">📖</span>
-            <h2 id="tutorial-header-title">月宮大廚修練手冊 <small>選擇模式並開始遊戲 (按 H / R 可隨時查看食譜)</small></h2>
+            <h2 id="tutorial-header-title">月宮大廚修練手冊 <small>選擇地圖與模式 (按 H / R 可隨時查看食譜)</small></h2>
           </div>
           <button id="btn-tutorial-close" class="modal-close-btn">&times;</button>
         </div>
 
         <div class="modal-body">
-          <!-- Section 0: Mode Selection (Hidden once match has started) -->
+          <!-- Section 0: Map Selection (Hidden once match has started) -->
+          <div class="guide-section map-select-section" id="map-select-section">
+            <h3 class="section-title">🗺️ 第一步：請選擇挑戰地圖</h3>
+            <div class="map-select-grid">
+              <div class="map-card active" id="map-select-1" data-map="map1">
+                <div class="map-icon">🌕</div>
+                <div class="map-info">
+                  <h4>地圖一：月宮庭院 (經典緊湊)</h4>
+                  <p>中島料理動線，緊湊流暢，適合快速出餐與備料 (1P: 2盤 / 2P: 3盤)</p>
+                </div>
+                <span class="map-badge">已選擇</span>
+              </div>
+              <div class="map-card" id="map-select-2" data-map="map2">
+                <div class="map-icon">🌲</div>
+                <div class="map-info">
+                  <h4>地圖二：桂樹林天台 (雙翼分工)</h4>
+                  <p>左翼備料右翼烘烤，隔桌飛拋食材，極限協作挑戰 (1P: 2盤 / 2P: 3盤)</p>
+                </div>
+                <span class="map-badge">點擊切換</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 0.5: Mode Selection (Hidden once match has started) -->
           <div class="guide-section mode-select-section" id="mode-select-section">
-            <h3 class="section-title">👥 請選擇遊玩模式以開始遊戲</h3>
+            <h3 class="section-title">👥 第二步：請選擇遊玩模式並開始遊戲</h3>
             <div class="mode-select-grid">
               <div class="mode-card" id="mode-select-1p">
                 <div class="mode-icon">🐰</div>
                 <div class="mode-info">
                   <h4>1P 單人修練模式 (點擊直接開始)</h4>
-                  <p>玉兔大廚獨當一面 (WASD / 方向鍵 + Space 拿放拋 + E 切洗 | 2個盤子)</p>
+                  <p>玉兔大廚掌控全場 (WASD / 方向鍵 + Space 拿放拋 + E 切洗)</p>
                 </div>
                 <span class="mode-badge start-badge">直接開始 ➔</span>
               </div>
@@ -143,7 +166,7 @@
                 <div class="mode-icon">🪓</div>
                 <div class="mode-info">
                   <h4>2P 雙人同機協作模式</h4>
-                  <p>1P 玉兔 (WASD+Space+E) + 2P 吳剛 (方向鍵+K+L | 3個盤子)</p>
+                  <p>1P 玉兔 (WASD+Space+E) + 2P 吳剛 (方向鍵+K+L)</p>
                 </div>
                 <span class="mode-badge">輸入 2P 暱稱 ➔</span>
               </div>
@@ -266,25 +289,31 @@
       </div>
     </div>
 
-    <!-- 4. Leaderboard Modal (Separate 1P and 2P Tabs) -->
+    <!-- 4. Leaderboard Modal (Separate Map & Mode Tabs) -->
     <div id="leaderboard-modal" class="modal-backdrop hidden">
       <div class="modal-card leaderboard-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">🏆</span>
-            <h2>中秋廚神天梯榜 <small>月宮最高榮譽</small></h2>
+            <h2>中秋廚神天梯榜 <small id="lb-header-tag">月宮最高榮譽</small></h2>
           </div>
           <button id="btn-leaderboard-close" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body">
-          <!-- 1P / 2P Tabs -->
+          <!-- 1. Map Tabs -->
+          <div class="leaderboard-map-tabs">
+            <button class="lb-map-btn active" data-map="map1" id="lb-map-1">🌕 地圖一：月宮庭院</button>
+            <button class="lb-map-btn" data-map="map2" id="lb-map-2">🌲 地圖二：桂樹林天台</button>
+          </div>
+
+          <!-- 2. Mode Tabs -->
           <div class="leaderboard-tabs">
             <button class="lb-tab-btn active" data-mode="1p" id="lb-tab-1p">🐰 1P 單人天梯榜</button>
             <button class="lb-tab-btn" data-mode="2p" id="lb-tab-2p">👥 2P 雙人天梯榜</button>
           </div>
 
-          <div class="leaderboard-table-wrapper">
-            <table class="leaderboard-table">
+          <div class="leaderboard-table-wrapper" id="leaderboard-content-box">
+            <table class="leaderboard-table" id="leaderboard-table">
               <thead>
                 <tr>
                   <th>排名</th>
@@ -298,6 +327,9 @@
                 <!-- Dynamically populated rows -->
               </tbody>
             </table>
+            <div id="leaderboard-empty" class="leaderboard-empty hidden">
+              目前此地圖尚無挑戰紀錄，快來挑戰成為首位登頂的大廚！🌕
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -312,7 +344,7 @@
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">🌕</span>
-            <h2>中秋狂歡宴結算 <small id="settle-mode-tag">1P 單人模式</small></h2>
+            <h2>中秋狂歡宴結算 <small id="settle-mode-tag">月宮庭院 (1P 單人模式)</small></h2>
           </div>
         </div>
         <div class="modal-body gameover-body">

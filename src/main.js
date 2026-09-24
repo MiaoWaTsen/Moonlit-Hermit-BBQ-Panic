@@ -1,11 +1,12 @@
 /**
  * Main Application Entry Point
- * Complete SDD Implementation with:
- * 1. Initial Nickname Entry -> Recipe/Mode Screen Flow
- * 2. 1P Starts Immediately / 2P Prompts for Player 2 Name
- * 3. In-Game Mode Switching Locked
- * 4. 2P Provides 3 Plates (1P Provides 2 Plates)
- * 5. Separate 1P and 2P Leaderboards
+ * Complete Multi-Map & Multi-Mode SDD Implementation:
+ * 1. Initial Nickname Entry Flow
+ * 2. Pre-Game Map Selection (Map 1: 月宮庭院 / Map 2: 桂樹林天台)
+ * 3. 1P Starts Immediately / 2P Prompts for Player 2 Name
+ * 4. In-Game Map & Mode Switching Locked
+ * 5. 2P Provides 3 Plates (1P Provides 2 Plates)
+ * 6. Separate Leaderboards for Map 1 / Map 2 and 1P / 2P (Default Empty)
  */
 
 import { InputManager } from './core/InputManager.js';
@@ -21,16 +22,20 @@ class App {
     this.authManager = new AuthManager();
     this.leaderboardManager = new LeaderboardManager();
     
-    // Player names
+    // Player names & Game Config
     this.p1Name = '玉兔大廚';
     this.p2Name = '吳剛大廚';
+    this.selectedMapId = 'map1';
 
     this.is2PMode = false;
     this.gameStarted = false;
     this.isPausedForModal = true;
+    
+    // Active leaderboard filter tabs
+    this.currentLbMap = 'map1';
     this.currentLbMode = '1p';
 
-    this.gameWorld = new GameWorld(false, this.p1Name, this.p2Name);
+    this.gameWorld = new GameWorld(false, this.p1Name, this.p2Name, this.selectedMapId);
     this.renderer = new Renderer2D(this.canvas);
     
     // UI Elements
@@ -38,6 +43,7 @@ class App {
     this.hudTimerEl = document.getElementById('hud-timer');
     this.hudScoreEl = document.getElementById('hud-score');
     this.hudComboEl = document.getElementById('hud-combo');
+    this.hudMapNameEl = document.getElementById('hud-map-name');
     this.hudPlayerNameEl = document.getElementById('hud-player-name');
     this.hudPlayerBadge = document.getElementById('hud-player-badge');
     this.ordersContainer = document.getElementById('order-tickets-container');
@@ -48,12 +54,11 @@ class App {
 
     // Modals
     this.authModal = document.getElementById('auth-modal');
-    this.authCloseBtn = document.getElementById('btn-auth-close');
     this.authForm = document.getElementById('auth-form');
-    this.authMsgEl = document.getElementById('auth-msg');
 
     this.tutorialModal = document.getElementById('tutorial-modal');
     this.tutorialHeaderTitle = document.getElementById('tutorial-header-title');
+    this.mapSelectSection = document.getElementById('map-select-section');
     this.modeSelectSection = document.getElementById('mode-select-section');
     this.tutorialCloseBtn = document.getElementById('btn-tutorial-close');
     this.tutorialStartBtn = document.getElementById('btn-tutorial-start');
@@ -67,7 +72,11 @@ class App {
     this.leaderboardModal = document.getElementById('leaderboard-modal');
     this.leaderboardCloseBtn = document.getElementById('btn-leaderboard-close');
     this.leaderboardConfirmBtn = document.getElementById('btn-leaderboard-confirm');
+    this.leaderboardTable = document.getElementById('leaderboard-table');
     this.leaderboardTbody = document.getElementById('leaderboard-tbody');
+    this.leaderboardEmpty = document.getElementById('leaderboard-empty');
+    this.lbMap1 = document.getElementById('lb-map-1');
+    this.lbMap2 = document.getElementById('lb-map-2');
     this.lbTab1P = document.getElementById('lb-tab-1p');
     this.lbTab2P = document.getElementById('lb-tab-2p');
 
@@ -107,14 +116,19 @@ class App {
     });
   }
 
+  getMapDisplayName(mapId = this.selectedMapId) {
+    return mapId === 'map2' ? '桂樹林天台' : '月宮庭院';
+  }
+
   updateHelperBar() {
     if (!this.desktopHelperBar) return;
+    const mapName = this.getMapDisplayName();
     if (this.is2PMode) {
       this.desktopHelperBar.innerHTML = `
         <div class="key-hint"><kbd>1P 🐰 ${this.p1Name}</kbd> WASD 移動 | Space 拿放前拋 | E 切菜洗碗</div>
         <div class="key-hint"><kbd>2P 🪓 ${this.p2Name}</kbd> 方向鍵 移動 | K 拿放前拋 | L 切菜洗碗</div>
         <div class="key-hint"><kbd>H / R</kbd> 查看食譜</div>
-        <div class="key-hint mode-indicator">👥 2P 雙人協作 (3個盤子)</div>
+        <div class="key-hint mode-indicator">👥 2P 雙人協作 (${mapName} | 3個盤子)</div>
       `;
     } else {
       this.desktopHelperBar.innerHTML = `
@@ -122,7 +136,7 @@ class App {
         <div class="key-hint"><kbd>Space</kbd> 拿放 (短按) / 前拋 (長按)</div>
         <div class="key-hint"><kbd>E</kbd> 備料切菜 / 水槽洗碗</div>
         <div class="key-hint"><kbd>H</kbd> 或 <kbd>R</kbd> 查看食譜</div>
-        <div class="key-hint mode-indicator">1P 單人修練 (2個盤子)</div>
+        <div class="key-hint mode-indicator">1P 單人修練 (${mapName} | 2個盤子)</div>
       `;
     }
   }
@@ -149,24 +163,50 @@ class App {
       this.gameWorld.soundManager.playOrderSuccess();
       this.authModal?.classList.add('hidden');
 
-      // Proceed to Step 2: Tutorial & Mode Selection
+      // Proceed to Step 2: Tutorial, Map & Mode Selection
       this.tutorialModal?.classList.remove('hidden');
       this.isPausedForModal = true;
     });
   }
 
-  // Step 2: Tutorial & Mode Selection
+  // Step 2: Tutorial, Map & Mode Selection
   initTutorialModal() {
-    const card1P = document.getElementById('mode-select-1p');
-    const card2P = document.getElementById('mode-select-2p');
+    const mapCard1 = document.getElementById('map-select-1');
+    const mapCard2 = document.getElementById('map-select-2');
+    const modeCard1P = document.getElementById('mode-select-1p');
+    const modeCard2P = document.getElementById('mode-select-2p');
 
-    // Select 1P: Starts immediately!
-    card1P?.addEventListener('click', () => {
+    // Map selection handlers
+    const setMap = (mapId) => {
+      this.selectedMapId = mapId;
+      if (mapId === 'map1') {
+        mapCard1?.classList.add('active');
+        mapCard2?.classList.remove('active');
+        const b1 = mapCard1?.querySelector('.map-badge');
+        const b2 = mapCard2?.querySelector('.map-badge');
+        if (b1) b1.textContent = '已選擇';
+        if (b2) b2.textContent = '點擊切換';
+      } else {
+        mapCard2?.classList.add('active');
+        mapCard1?.classList.remove('active');
+        const b1 = mapCard1?.querySelector('.map-badge');
+        const b2 = mapCard2?.querySelector('.map-badge');
+        if (b1) b1.textContent = '點擊切換';
+        if (b2) b2.textContent = '已選擇';
+      }
+      this.gameWorld.soundManager.playPickup();
+    };
+
+    mapCard1?.addEventListener('click', () => setMap('map1'));
+    mapCard2?.addEventListener('click', () => setMap('map2'));
+
+    // Select 1P: Starts immediately on selected map!
+    modeCard1P?.addEventListener('click', () => {
       this.startGame(false);
     });
 
     // Select 2P: Prompts for Player 2 name!
-    card2P?.addEventListener('click', () => {
+    modeCard2P?.addEventListener('click', () => {
       this.tutorialModal?.classList.add('hidden');
       if (this.p1SummaryName) this.p1SummaryName.textContent = this.p1Name;
       this.player2Modal?.classList.remove('hidden');
@@ -178,7 +218,7 @@ class App {
       if (!this.gameStarted) {
         this.startGame(false);
       } else {
-        // Just dismiss in-game recipe manual
+        // Dismiss in-game recipe manual
         this.tutorialModal?.classList.add('hidden');
         this.isPausedForModal = false;
         this.inputManager.reset();
@@ -229,13 +269,17 @@ class App {
     this.is2PMode = is2P;
     this.inputManager.is2PMode = is2P;
     this.currentLbMode = is2P ? '2p' : '1p';
+    this.currentLbMap = this.selectedMapId;
 
-    // Lock mode selection for in-game recipe manual
+    // Lock map & mode selection for in-game recipe manual
+    if (this.mapSelectSection) {
+      this.mapSelectSection.style.display = 'none';
+    }
     if (this.modeSelectSection) {
       this.modeSelectSection.style.display = 'none';
     }
     if (this.tutorialHeaderTitle) {
-      this.tutorialHeaderTitle.innerHTML = '月宮大廚修練手冊 <small>中秋烤肉食譜手冊 (按 H / R 或 空白鍵 關閉)</small>';
+      this.tutorialHeaderTitle.innerHTML = '月宮大廚修練手冊 <small>中秋烤肉食譜指南 (按 H / R 或 空白鍵 關閉)</small>';
     }
     if (this.tutorialStartBtn) {
       this.tutorialStartBtn.textContent = '返回廚房繼續烤肉 (Space / Enter / Esc)';
@@ -248,14 +292,17 @@ class App {
     this.gameoverModal?.classList.add('hidden');
     this.leaderboardModal?.classList.add('hidden');
 
-    // Create fresh GameWorld with correct plate count & player names
-    this.gameWorld = new GameWorld(this.is2PMode, this.p1Name, this.p2Name);
+    // Create fresh GameWorld with correct map, plate count & player names
+    this.gameWorld = new GameWorld(this.is2PMode, this.p1Name, this.p2Name, this.selectedMapId);
     this.dishesServedCount = 0;
     this.maxComboReached = 1.0;
     this.renderedOrderIds.clear();
     this.hasRecordedGameOver = false;
 
-    // Update HUD
+    // Update HUD labels
+    if (this.hudMapNameEl) {
+      this.hudMapNameEl.textContent = this.getMapDisplayName();
+    }
     if (this.hudPlayerNameEl) {
       this.hudPlayerNameEl.textContent = this.is2PMode ? `${this.p1Name} & ${this.p2Name}` : this.p1Name;
     }
@@ -268,11 +315,12 @@ class App {
     this.gameWorld.soundManager.playOrderSuccess();
   }
 
-  // Leaderboard Modal (Separate 1P and 2P)
+  // Leaderboard Modal (Separate Map & Mode Filter Tabs)
   initLeaderboardModal() {
-    const openLB = (mode = this.currentLbMode) => {
+    const openLB = (mapId = this.currentLbMap, mode = this.currentLbMode) => {
+      this.currentLbMap = mapId;
       this.currentLbMode = mode;
-      this.renderLeaderboardTable(mode);
+      this.renderLeaderboardTable(mapId, mode);
       this.leaderboardModal?.classList.remove('hidden');
       this.isPausedForModal = true;
       this.gameWorld.soundManager.playPickup();
@@ -288,24 +336,48 @@ class App {
       }
     };
 
+    // Map Tabs
+    this.lbMap1?.addEventListener('click', () => {
+      this.currentLbMap = 'map1';
+      this.renderLeaderboardTable('map1', this.currentLbMode);
+    });
+
+    this.lbMap2?.addEventListener('click', () => {
+      this.currentLbMap = 'map2';
+      this.renderLeaderboardTable('map2', this.currentLbMode);
+    });
+
+    // Mode Tabs
     this.lbTab1P?.addEventListener('click', () => {
       this.currentLbMode = '1p';
-      this.renderLeaderboardTable('1p');
+      this.renderLeaderboardTable(this.currentLbMap, '1p');
     });
 
     this.lbTab2P?.addEventListener('click', () => {
       this.currentLbMode = '2p';
-      this.renderLeaderboardTable('2p');
+      this.renderLeaderboardTable(this.currentLbMap, '2p');
     });
 
-    this.leaderboardOpenBtn?.addEventListener('click', () => openLB(this.is2PMode ? '2p' : '1p'));
+    this.leaderboardOpenBtn?.addEventListener('click', () => openLB(this.selectedMapId, this.is2PMode ? '2p' : '1p'));
     this.leaderboardCloseBtn?.addEventListener('click', closeLB);
     this.leaderboardConfirmBtn?.addEventListener('click', closeLB);
   }
 
-  renderLeaderboardTable(mode = '1p') {
+  renderLeaderboardTable(mapId = 'map1', mode = '1p') {
     if (!this.leaderboardTbody) return;
 
+    // Update Map Tabs Active State
+    if (this.lbMap1 && this.lbMap2) {
+      if (mapId === 'map2') {
+        this.lbMap1.classList.remove('active');
+        this.lbMap2.classList.add('active');
+      } else {
+        this.lbMap2.classList.remove('active');
+        this.lbMap1.classList.add('active');
+      }
+    }
+
+    // Update Mode Tabs Active State
     if (this.lbTab1P && this.lbTab2P) {
       if (mode === '2p') {
         this.lbTab1P.classList.remove('active');
@@ -316,7 +388,20 @@ class App {
       }
     }
 
-    const scores = this.leaderboardManager.getScores(mode);
+    const scores = this.leaderboardManager.getScores(mapId, mode);
+
+    if (scores.length === 0) {
+      if (this.leaderboardTable) this.leaderboardTable.classList.add('hidden');
+      if (this.leaderboardEmpty) {
+        this.leaderboardEmpty.classList.remove('hidden');
+        this.leaderboardEmpty.textContent = `目前【${this.getMapDisplayName(mapId)} (${mode === '2p' ? '2P雙人' : '1P單人'})】尚無挑戰紀錄，快來挑戰成為首位登頂的大廚！🌕`;
+      }
+      this.leaderboardTbody.innerHTML = '';
+      return;
+    }
+
+    if (this.leaderboardTable) this.leaderboardTable.classList.remove('hidden');
+    if (this.leaderboardEmpty) this.leaderboardEmpty.classList.add('hidden');
 
     let html = '';
     scores.forEach((entry, idx) => {
@@ -348,8 +433,9 @@ class App {
 
     this.settleViewLbBtn?.addEventListener('click', () => {
       this.gameoverModal?.classList.add('hidden');
+      this.currentLbMap = this.selectedMapId;
       this.currentLbMode = this.is2PMode ? '2p' : '1p';
-      this.renderLeaderboardTable(this.currentLbMode);
+      this.renderLeaderboardTable(this.currentLbMap, this.currentLbMode);
       this.leaderboardModal?.classList.remove('hidden');
     });
   }
@@ -365,7 +451,7 @@ class App {
     const displayName = this.is2PMode ? `${this.p1Name} & ${this.p2Name}` : this.p1Name;
 
     this.authManager.recordGame(score);
-    this.leaderboardManager.addScore(displayName, score, maxCombo, mode);
+    this.leaderboardManager.addScore(displayName, score, maxCombo, this.selectedMapId, mode);
 
     let title = '👨‍🍳 月宮學徒';
     if (score >= 2500) title = '👑 米其林月宮神廚 (天下第一)';
@@ -377,7 +463,10 @@ class App {
     if (this.settleDishesEl) this.settleDishesEl.textContent = `${this.dishesServedCount} 份`;
     if (this.settleComboEl) this.settleComboEl.textContent = `x${maxCombo.toFixed(1)}`;
     if (this.settleTitleEl) this.settleTitleEl.textContent = `🎉 ${title}`;
-    if (this.settleModeTag) this.settleModeTag.textContent = this.is2PMode ? '👥 2P 雙人協作模式' : '🐰 1P 單人修練模式';
+    if (this.settleModeTag) {
+      const mapName = this.getMapDisplayName();
+      this.settleModeTag.textContent = `${mapName} (${this.is2PMode ? '2P 雙人協作' : '1P 單人修練'})`;
+    }
 
     this.gameWorld.soundManager.playOrderSuccess();
     this.gameoverModal?.classList.remove('hidden');

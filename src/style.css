@@ -574,7 +574,8 @@ html, body {
   letter-spacing: 0.5px;
 }
 
-/* Mode Selection Cards */
+/* Map & Mode Selection Cards */
+.map-select-section,
 .mode-select-section {
   background: rgba(255, 215, 0, 0.05);
   border: 1px solid rgba(255, 215, 0, 0.25);
@@ -582,12 +583,14 @@ html, body {
   padding: 12px 16px;
 }
 
+.map-select-grid,
 .mode-select-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
+.map-card,
 .mode-card {
   background: rgba(18, 26, 44, 0.7);
   border: 2px solid rgba(255, 255, 255, 0.12);
@@ -602,6 +605,7 @@ html, body {
   user-select: none;
 }
 
+.map-card:hover,
 .mode-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 215, 0, 0.5);
@@ -609,12 +613,14 @@ html, body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+.map-card.active,
 .mode-card.active {
   border-color: var(--gold-bright);
   background: linear-gradient(135deg, rgba(245, 176, 65, 0.22) 0%, rgba(26, 37, 64, 0.9) 100%);
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.35), inset 0 0 12px rgba(255, 215, 0, 0.15);
 }
 
+.map-card .map-icon,
 .mode-card .mode-icon {
   font-size: 2rem;
   flex-shrink: 0;
@@ -628,11 +634,13 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.map-card.active .map-icon,
 .mode-card.active .mode-icon {
   border-color: var(--gold-bright);
   box-shadow: 0 0 10px var(--gold-glow);
 }
 
+.map-card .map-info,
 .mode-card .mode-info {
   flex: 1;
   display: flex;
@@ -640,6 +648,7 @@ html, body {
   gap: 3px;
 }
 
+.map-card .map-info h4,
 .mode-card .mode-info h4 {
   font-size: 0.95rem;
   font-weight: 800;
@@ -647,10 +656,12 @@ html, body {
   margin: 0;
 }
 
+.map-card.active .map-info h4,
 .mode-card.active .mode-info h4 {
   color: var(--gold-bright);
 }
 
+.map-card .map-info p,
 .mode-card .mode-info p {
   font-size: 0.72rem;
   color: #a8bedd;
@@ -658,6 +669,7 @@ html, body {
   line-height: 1.35;
 }
 
+.map-card .map-badge,
 .mode-card .mode-badge {
   font-size: 0.7rem;
   font-weight: 700;
@@ -670,6 +682,7 @@ html, body {
   transition: all 0.2s;
 }
 
+.map-card.active .map-badge,
 .mode-card.active .mode-badge {
   background: var(--gold-bright);
   color: #0d1322;
@@ -1035,10 +1048,42 @@ html, body {
 /* =========================================
    Leaderboard Modal Styles
    ========================================= */
+.leaderboard-map-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.lb-map-btn {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  color: #ffecb3;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.lb-map-btn:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: var(--gold-bright);
+}
+
+.lb-map-btn.active {
+  background: linear-gradient(135deg, rgba(245, 176, 65, 0.35), rgba(40, 55, 90, 0.95));
+  color: #ffffff;
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
 .leaderboard-tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 8px;
 }
@@ -1049,9 +1094,9 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #9bb0d3;
   font-weight: 700;
-  font-size: 0.88rem;
-  padding: 8px 12px;
-  border-radius: 8px;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
@@ -1064,10 +1109,21 @@ html, body {
 }
 
 .lb-tab-btn.active {
-  background: linear-gradient(135deg, rgba(245, 176, 65, 0.25), rgba(26, 37, 64, 0.9));
+  background: rgba(255, 215, 0, 0.18);
   color: var(--gold-bright);
   border-color: var(--gold-bright);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.25);
+}
+
+.leaderboard-empty {
+  text-align: center;
+  padding: 36px 16px;
+  color: #9bb0d3;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
 }
 
 .leaderboard-table-wrapper {
