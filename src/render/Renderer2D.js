@@ -380,66 +380,99 @@ export class Renderer2D {
     ctx.ellipse(player.x, player.y + player.radius * 0.8, player.radius * 0.9, player.radius * 0.45, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Character body (Cute Moon Rabbit Chef)
+    // 2. Character body
     const bob = player.isMoving ? Math.sin(player.walkAnimTimer) * 3 : 0;
     const cx = player.x;
     const cy = player.y + bob;
 
-    // Rabbit White Body
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(cx, cy, player.radius, 0, Math.PI * 2);
-    ctx.fill();
+    if (player.id === 'p2') {
+      // Player 2: 吳剛大廚 (Wu Gang Chef - Heroic Brown & Green)
+      ctx.fillStyle = '#ffcc80'; // Skin tone body
+      ctx.beginPath();
+      ctx.arc(cx, cy, player.radius, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Chef Red Scarf
-    ctx.fillStyle = '#e74c3c';
-    ctx.beginPath();
-    ctx.arc(cx, cy + 4, player.radius * 0.9, 0.2 * Math.PI, 0.8 * Math.PI);
-    ctx.fill();
+      // Chef / Warrior Bandana (Forest Green)
+      ctx.fillStyle = '#2e7d32';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 4, player.radius * 0.95, 0.9 * Math.PI, 2.1 * Math.PI);
+      ctx.fill();
 
-    // Cute Long Bunny Ears
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(cx - 7, cy - player.radius - 8, 4, 10, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffb6c1';
-    ctx.beginPath();
-    ctx.ellipse(cx - 7, cy - player.radius - 8, 2, 7, -0.2, 0, Math.PI * 2);
-    ctx.fill();
+      // Bandana Tail
+      ctx.fillStyle = '#2e7d32';
+      ctx.fillRect(cx - player.radius - 4, cy - 6, 8, 4);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(cx + 7, cy - player.radius - 8, 4, 10, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffb6c1';
-    ctx.beginPath();
-    ctx.ellipse(cx + 7, cy - player.radius - 8, 2, 7, 0.2, 0, Math.PI * 2);
-    ctx.fill();
+      // Heroic Eyebrows & Eyes
+      ctx.fillStyle = '#1b1b1b';
+      ctx.fillRect(cx - 7, cy - 5, 4, 2);
+      ctx.fillRect(cx + 3, cy - 5, 4, 2);
+      ctx.beginPath();
+      ctx.arc(cx - 5, cy - 1, 2, 0, Math.PI * 2);
+      ctx.arc(cx + 5, cy - 1, 2, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Eyes and Cheeks
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath();
-    ctx.arc(cx - 5, cy - 2, 2.2, 0, Math.PI * 2);
-    ctx.arc(cx + 5, cy - 2, 2.2, 0, Math.PI * 2);
-    ctx.fill();
+      // Beard / Tough smile
+      ctx.strokeStyle = '#5d4037';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy + 3, 4, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.stroke();
+    } else {
+      // Player 1: 玉兔大廚 (Moon Rabbit Chef - White Bunny)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx, cy, player.radius, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Pink blush cheeks
-    ctx.fillStyle = 'rgba(255, 105, 180, 0.6)';
-    ctx.beginPath();
-    ctx.arc(cx - 9, cy + 2, 3, 0, Math.PI * 2);
-    ctx.arc(cx + 9, cy + 2, 3, 0, Math.PI * 2);
-    ctx.fill();
+      // Chef Red Scarf
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 4, player.radius * 0.9, 0.2 * Math.PI, 0.8 * Math.PI);
+      ctx.fill();
 
-    // Facing indicator badge
+      // Bunny Ears
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(cx - 7, cy - player.radius - 8, 4, 10, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffb6c1';
+      ctx.beginPath();
+      ctx.ellipse(cx - 7, cy - player.radius - 8, 2, 7, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(cx + 7, cy - player.radius - 8, 4, 10, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffb6c1';
+      ctx.beginPath();
+      ctx.ellipse(cx + 7, cy - player.radius - 8, 2, 7, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cute Eyes & Blush
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.arc(cx - 5, cy - 2, 2.2, 0, Math.PI * 2);
+      ctx.arc(cx + 5, cy - 2, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(255, 105, 180, 0.6)';
+      ctx.beginPath();
+      ctx.arc(cx - 9, cy + 2, 3, 0, Math.PI * 2);
+      ctx.arc(cx + 9, cy + 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Facing indicator
     const arrowDist = player.radius + 6;
     const ax = cx + player.facing.x * arrowDist;
     const ay = cy + player.facing.y * arrowDist;
-    ctx.fillStyle = '#ffd700';
+    ctx.fillStyle = player.id === 'p2' ? '#4caf50' : '#ffd700';
     ctx.beginPath();
     ctx.arc(ax, ay, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3. Draw Held Item above head
+    // 3. Held Item
     if (player.heldItem) {
       this.drawItem(ctx, cx, cy - player.radius - 20, player.heldItem, 1.1);
     }

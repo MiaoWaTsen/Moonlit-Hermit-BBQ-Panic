@@ -1,7 +1,7 @@
 /**
  * Main Application Entry Point
  * Synchronizes Game Simulation, HUD, Order Tickets, Audio, Auth, Leaderboard,
- * Game Over Settlement & Mobile Controls
+ * 1P/2P Local Co-op, Game Over Settlement & Mobile Controls
  */
 
 import { InputManager } from './core/InputManager.js';
@@ -16,7 +16,7 @@ class App {
     this.inputManager = new InputManager();
     this.authManager = new AuthManager();
     this.leaderboardManager = new LeaderboardManager();
-    this.gameWorld = new GameWorld();
+    this.gameWorld = new GameWorld(false);
     this.renderer = new Renderer2D(this.canvas);
     
     // UI Elements
@@ -30,6 +30,8 @@ class App {
     this.soundToggleBtn = document.getElementById('btn-sound-toggle');
     this.recipeOpenBtn = document.getElementById('btn-recipe-open');
     this.leaderboardOpenBtn = document.getElementById('btn-leaderboard-open');
+    this.modeToggleBtn = document.getElementById('btn-mode-toggle');
+    this.desktopHelperBar = document.getElementById('desktop-helper-bar');
 
     // Modals
     this.tutorialModal = document.getElementById('tutorial-modal');
@@ -54,7 +56,8 @@ class App {
     this.settleRestartBtn = document.getElementById('btn-settle-restart');
     this.settleViewLbBtn = document.getElementById('btn-settle-view-leaderboard');
 
-    // Stats & DOM Caches
+    // State & Caches
+    this.is2PMode = false;
     this.dishesServedCount = 0;
     this.maxComboReached = 1.0;
     this.renderedOrderIds = new Set();
@@ -64,6 +67,7 @@ class App {
     this.lastTime = performance.now();
     this.initPlayerHUD();
     this.initAudioToggle();
+    this.initModeToggle();
     this.initTutorialModal();
     this.initAuthModal();
     this.initLeaderboardModal();
@@ -85,6 +89,41 @@ class App {
       this.soundToggleBtn.textContent = isMuted ? '🔇' : '🔊';
       this.soundToggleBtn.title = isMuted ? '點擊開啟音效' : '點擊靜音';
     });
+  }
+
+  initModeToggle() {
+    this.modeToggleBtn?.addEventListener('click', () => {
+      this.is2PMode = !this.is2PMode;
+      this.inputManager.is2PMode = this.is2PMode;
+      this.gameWorld.set2PMode(this.is2PMode);
+      
+      if (this.modeToggleBtn) {
+        this.modeToggleBtn.textContent = this.is2PMode ? '👥 2P 雙人' : '👥 1P 單人';
+      }
+
+      this.updateHelperBar();
+      this.gameWorld.soundManager.playPickup();
+    });
+  }
+
+  updateHelperBar() {
+    if (!this.desktopHelperBar) return;
+    if (this.is2PMode) {
+      this.desktopHelperBar.innerHTML = `
+        <div class="key-hint"><kbd>1P 🐰 玉兔</kbd> WASD 移動 | Space 拿放前拋 | E 切菜洗碗</div>
+        <div class="key-hint"><kbd>2P 🪓 吳剛</kbd> 方向鍵 移動 | K 拿放前拋 | L 切菜洗碗</div>
+        <div class="key-hint"><kbd>H / R</kbd> 食譜</div>
+        <div class="key-hint mode-indicator">👥 2P 雙人協作</div>
+      `;
+    } else {
+      this.desktopHelperBar.innerHTML = `
+        <div class="key-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 或 <kbd>方向鍵</kbd> 移動</div>
+        <div class="key-hint"><kbd>Space</kbd> 拿放 (短按) / 前拋 (長按)</div>
+        <div class="key-hint"><kbd>E</kbd> 備料切菜 / 水槽洗碗</div>
+        <div class="key-hint"><kbd>H</kbd> 或 <kbd>R</kbd> 查看食譜</div>
+        <div class="key-hint mode-indicator">1P 單人修練</div>
+      `;
+    }
   }
 
   initTutorialModal() {
@@ -254,11 +293,9 @@ class App {
     const maxCombo = this.maxComboReached;
     const username = this.authManager.currentUser?.username || '訪客大廚';
 
-    // Record score
     this.authManager.recordGame(score);
     this.leaderboardManager.addScore(username, score, maxCombo);
 
-    // Dynamic Title Tier
     let title = '👨‍🍳 月宮學徒';
     if (score >= 2500) title = '👑 米其林月宮神廚 (天下第一)';
     else if (score >= 1800) title = '🔥 萬家烤肉達人 (香飄十里)';
@@ -276,7 +313,7 @@ class App {
 
   restartGame() {
     this.gameoverModal?.classList.add('hidden');
-    this.gameWorld = new GameWorld();
+    this.gameWorld = new GameWorld(this.is2PMode);
     this.dishesServedCount = 0;
     this.maxComboReached = 1.0;
     this.renderedOrderIds.clear();
@@ -288,16 +325,24 @@ class App {
 
   initGlobalShortcuts() {
     window.addEventListener('keydown', (e) => {
-      // Toggle Cookbook / Tutorial with H or R
+      // Toggle or Close Cookbook modal with H, R, Space, Enter, Escape
+      const isTutorialOpen = !this.tutorialModal?.classList.contains('hidden');
+
       if (e.code === 'KeyH' || e.code === 'KeyR') {
-        const isHidden = this.tutorialModal?.classList.contains('hidden');
-        if (isHidden) {
-          this.tutorialModal?.classList.remove('hidden');
-          this.isPausedForModal = true;
-        } else {
+        if (isTutorialOpen) {
           this.tutorialModal?.classList.add('hidden');
           this.isPausedForModal = false;
+        } else {
+          this.tutorialModal?.classList.remove('hidden');
+          this.isPausedForModal = true;
+          this.gameWorld.soundManager.playDrop();
         }
+      } else if (isTutorialOpen && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
+        e.preventDefault();
+        this.tutorialModal?.classList.add('hidden');
+        this.isPausedForModal = false;
+        this.lastTime = performance.now();
+        this.gameWorld.soundManager.playPickup();
       }
     });
   }
@@ -313,33 +358,33 @@ class App {
 
       btnPickup?.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.inputManager.isPickupHeld = true;
-        this.inputManager.pickupPressTime = performance.now();
+        this.inputManager.p1IsPickupHeld = true;
+        this.inputManager.p1PickupPressTime = performance.now();
       });
 
       btnPickup?.addEventListener('touchend', (e) => {
         e.preventDefault();
-        if (this.inputManager.isPickupHeld) {
-          const hold = performance.now() - this.inputManager.pickupPressTime;
-          this.inputManager.isPickupHeld = false;
+        if (this.inputManager.p1IsPickupHeld) {
+          const hold = performance.now() - this.inputManager.p1PickupPressTime;
+          this.inputManager.p1IsPickupHeld = false;
           if (hold < 220) {
-            this.inputManager.pickupJustPressed = true;
+            this.inputManager.p1PickupJustPressed = true;
           } else {
-            this.inputManager.throwJustReleased = true;
-            this.inputManager.throwPower = Math.min(1.4, 0.7 + (hold / 600));
+            this.inputManager.p1ThrowJustReleased = true;
+            this.inputManager.p1ThrowPower = Math.min(1.4, 0.7 + (hold / 600));
           }
         }
       });
 
       btnInteract?.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.inputManager.interactJustPressed = true;
-        this.inputManager.isInteractingHeld = true;
+        this.inputManager.p1InteractJustPressed = true;
+        this.inputManager.p1IsInteractingHeld = true;
       });
 
       btnInteract?.addEventListener('touchend', (e) => {
         e.preventDefault();
-        this.inputManager.isInteractingHeld = false;
+        this.inputManager.p1IsInteractingHeld = false;
       });
     }
   }
@@ -352,21 +397,16 @@ class App {
       if (!this.isPausedForModal) {
         this.gameWorld.update(dt, this.inputManager);
 
-        // Track stats
         if (this.gameWorld.combo > this.maxComboReached) {
           this.maxComboReached = this.gameWorld.combo;
         }
 
-        // Check game over
         if (this.gameWorld.isGameOver) {
           this.triggerGameOverSettlement();
         }
       }
 
-      // Render
       this.renderer.render(this.gameWorld, this.inputManager);
-
-      // Update HUD
       this.updateHUD();
 
       requestAnimationFrame(loop);
