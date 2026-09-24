@@ -13,12 +13,14 @@ import { ParticleSystem } from '../render/ParticleSystem.js';
 import { TILE_TYPES, ITEM_TYPES, TILE_SIZE } from '../core/Constants.js';
 
 export class GameWorld {
-  constructor(is2P = false) {
-    this.mapGrid = new MapGrid();
+  constructor(is2P = false, p1Name = '玉兔大廚', p2Name = '吳剛大廚') {
     this.is2PMode = is2P;
+    this.p1Name = p1Name;
+    this.p2Name = p2Name;
+    this.mapGrid = new MapGrid(this.is2PMode);
 
-    this.player1 = new Player('p1', '月白之隱 (玉兔大廚)', 2, 4, '🐰', '#ffd700');
-    this.player2 = new Player('p2', '廣寒神將 (吳剛大廚)', 8, 4, '🪓', '#e74c3c');
+    this.player1 = new Player('p1', this.p1Name, 2, 4, '🐰', '#ffd700');
+    this.player2 = new Player('p2', this.p2Name, 8, 4, '🪓', '#e74c3c');
     
     this.players = this.is2PMode ? [this.player1, this.player2] : [this.player1];
     
@@ -39,8 +41,13 @@ export class GameWorld {
     this.initWorld();
   }
 
-  set2PMode(enabled) {
+  set2PMode(enabled, p1Name = this.p1Name, p2Name = this.p2Name) {
     this.is2PMode = enabled;
+    this.p1Name = p1Name;
+    this.p2Name = p2Name;
+    this.player1.name = this.p1Name;
+    this.player2.name = this.p2Name;
+    this.mapGrid = new MapGrid(this.is2PMode);
     this.players = enabled ? [this.player1, this.player2] : [this.player1];
   }
 

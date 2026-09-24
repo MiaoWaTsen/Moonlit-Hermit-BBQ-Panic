@@ -7,12 +7,13 @@ import { MAP_COLS, MAP_ROWS, TILE_TYPES, ITEM_TYPES } from '../core/Constants.js
 import { Item } from './Item.js';
 
 export class MapGrid {
-  constructor() {
+  constructor(is2P = false) {
     this.cols = MAP_COLS;
     this.rows = MAP_ROWS;
     this.grid = [];
     this.itemsOnCounters = new Map(); // key: "x,y", value: Item object
     this.washProgress = new Map();     // key: "x,y", value: 0.0 to 1.0
+    this.is2P = is2P;
     
     this.initMap();
   }
@@ -60,9 +61,12 @@ export class MapGrid {
       this.grid.push(row);
     }
 
-    // Place the 2 clean plates on convenient upper center counters
+    // 1P gets 2 clean plates (4,0) and (5,0); 2P gets 3 clean plates (3,0), (4,0), (5,0)
     this.setItemAt(4, 0, Item.create(ITEM_TYPES.PLATE));
     this.setItemAt(5, 0, Item.create(ITEM_TYPES.PLATE));
+    if (this.is2P) {
+      this.setItemAt(3, 0, Item.create(ITEM_TYPES.PLATE));
+    }
   }
 
   getTileType(gridX, gridY) {

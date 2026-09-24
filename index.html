@@ -45,9 +45,8 @@
           <span class="stat-label">連擊</span>
           <span class="stat-val" id="hud-combo">x1.0</span>
         </div>
-        <button id="btn-mode-toggle" class="icon-btn mode-btn" title="切換 1P單人 / 2P雙人模式">👥 1P</button>
-        <button id="btn-recipe-open" class="icon-btn" title="食譜手冊 (快捷鍵 H / R)">📖</button>
-        <button id="btn-leaderboard-open" class="icon-btn" title="排行榜">🏆</button>
+        <button id="btn-recipe-open" class="icon-btn" title="食譜手冊 (快捷鍵 H / R)">📖 食譜</button>
+        <button id="btn-leaderboard-open" class="icon-btn" title="排行榜">🏆 排行榜</button>
         <button id="btn-sound-toggle" class="icon-btn" title="音效切換">🔊</button>
       </div>
     </header>
@@ -91,44 +90,76 @@
       <div class="key-hint mode-indicator" id="game-mode-indicator">1P 單人修練模式</div>
     </footer>
 
-    <!-- 1. Tutorial & Recipe Guidebook Modal Overlay -->
-    <div id="tutorial-modal" class="modal-backdrop">
+    <!-- 1. Player Auth / Nickname Modal (First Step on site entry) -->
+    <div id="auth-modal" class="modal-backdrop">
+      <div class="modal-card auth-card glass-panel">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span class="modal-icon">🌕</span>
+            <h2>月白之隱：中秋烤肉大作戰 <small>大廚登錄</small></h2>
+          </div>
+        </div>
+        <div class="modal-body auth-body">
+          <div class="auth-tabs">
+            <button class="auth-tab-btn active" data-tab="guest">訪客快速玩</button>
+            <button class="auth-tab-btn" data-tab="login">大廚登入</button>
+            <button class="auth-tab-btn" data-tab="register">新廚註冊</button>
+          </div>
+
+          <form id="auth-form" class="auth-form">
+            <div class="form-group" id="group-username">
+              <label for="auth-username">大廚暱稱 / 帳號</label>
+              <input type="text" id="auth-username" placeholder="請輸入大廚暱稱 (例如: 玉兔大廚)" value="玉兔大廚" required autocomplete="username">
+            </div>
+            <div class="form-group" id="group-password" style="display: none;">
+              <label for="auth-password">密碼</label>
+              <input type="password" id="auth-password" placeholder="請輸入至少 4 碼密碼" autocomplete="current-password">
+            </div>
+            <div id="auth-msg" class="auth-msg hidden"></div>
+            <button type="submit" id="btn-auth-submit" class="btn-primary full-btn">確定並進入料理手冊 ➔</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Tutorial & Recipe Guidebook Modal Overlay (Second Step: Mode Select & Instructions) -->
+    <div id="tutorial-modal" class="modal-backdrop hidden">
       <div class="modal-card cookbook-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">📖</span>
-            <h2>月宮大廚修練手冊 <small>中秋烤肉必勝指南 (按 H 或 R 可隨時查看)</small></h2>
+            <h2 id="tutorial-header-title">月宮大廚修練手冊 <small>選擇模式並開始遊戲 (按 H / R 可隨時查看食譜)</small></h2>
           </div>
           <button id="btn-tutorial-close" class="modal-close-btn">&times;</button>
         </div>
 
         <div class="modal-body">
-          <!-- Section 0: Mode Selection -->
-          <div class="guide-section mode-select-section">
-            <h3 class="section-title">👥 請選擇本局遊玩模式</h3>
+          <!-- Section 0: Mode Selection (Hidden once match has started) -->
+          <div class="guide-section mode-select-section" id="mode-select-section">
+            <h3 class="section-title">👥 請選擇遊玩模式以開始遊戲</h3>
             <div class="mode-select-grid">
-              <div class="mode-card active" id="mode-select-1p">
+              <div class="mode-card" id="mode-select-1p">
                 <div class="mode-icon">🐰</div>
                 <div class="mode-info">
-                  <h4>1P 單人修練模式</h4>
-                  <p>玉兔大廚掌控全場 (WASD 或 方向鍵 + Space 拿放前拋 + E 切菜洗碗)</p>
+                  <h4>1P 單人修練模式 (點擊直接開始)</h4>
+                  <p>玉兔大廚獨當一面 (WASD / 方向鍵 + Space 拿放拋 + E 切洗 | 2個盤子)</p>
                 </div>
-                <span class="mode-badge">已選擇</span>
+                <span class="mode-badge start-badge">直接開始 ➔</span>
               </div>
               <div class="mode-card" id="mode-select-2p">
                 <div class="mode-icon">🪓</div>
                 <div class="mode-info">
                   <h4>2P 雙人同機協作模式</h4>
-                  <p>1P 玉兔 (WASD+Space+E) + 2P 吳剛 (方向鍵+K+L) 同台飛拋協作</p>
+                  <p>1P 玉兔 (WASD+Space+E) + 2P 吳剛 (方向鍵+K+L | 3個盤子)</p>
                 </div>
-                <span class="mode-badge">切換</span>
+                <span class="mode-badge">輸入 2P 暱稱 ➔</span>
               </div>
             </div>
           </div>
 
           <!-- Section 1: Visual 3-Ingredient Flowcharts -->
           <div class="guide-section">
-            <h3 class="section-title">🥩 3 大食材圖解處理全流程（必看！）</h3>
+            <h3 class="section-title">🥩 3 大食材圖解處理全流程</h3>
             <div class="pipelines-container">
               <!-- Beef Pipeline -->
               <div class="pipeline-card">
@@ -211,45 +242,38 @@
         </div>
 
         <div class="modal-footer">
-          <button id="btn-tutorial-start" class="btn-primary start-btn">開始修練 (Enter)</button>
+          <button id="btn-tutorial-start" class="btn-primary start-btn">開始 1P 單人修練 (Space / Enter)</button>
         </div>
       </div>
     </div>
 
-    <!-- 2. Player Auth Modal (Login / Register / Guest) -->
-    <div id="auth-modal" class="modal-backdrop hidden">
+    <!-- 3. Player 2 Name Input Modal (Prompted when 2P mode is selected) -->
+    <div id="player2-modal" class="modal-backdrop hidden">
       <div class="modal-card auth-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
-            <span class="modal-icon">👤</span>
-            <h2>月宮大廚身份登錄</h2>
+            <span class="modal-icon">🪓</span>
+            <h2>2P 雙人協作大廚登錄</h2>
           </div>
-          <button id="btn-auth-close" class="modal-close-btn">&times;</button>
+          <button id="btn-p2-close" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body auth-body">
-          <div class="auth-tabs">
-            <button class="auth-tab-btn active" data-tab="login">大廚登入</button>
-            <button class="auth-tab-btn" data-tab="register">新廚註冊</button>
-            <button class="auth-tab-btn" data-tab="guest">訪客快速玩</button>
+          <div class="p2-intro-box">
+            <p>1P 玉兔：<strong id="p1-summary-name">玉兔大廚</strong> (WASD + Space + E)</p>
+            <p>2P 吳剛：方向鍵 + K (拿放拋) + L (切洗)</p>
           </div>
-
-          <form id="auth-form" class="auth-form">
-            <div class="form-group" id="group-username">
-              <label for="auth-username">大廚暱稱 / 帳號</label>
-              <input type="text" id="auth-username" placeholder="請輸入 2~12 字大廚名稱" required autocomplete="username">
+          <form id="p2-form" class="auth-form">
+            <div class="form-group">
+              <label for="p2-username">請輸入 2P 大廚暱稱 (吳剛)</label>
+              <input type="text" id="p2-username" placeholder="請輸入 2P 暱稱 (例如: 吳剛大廚)" value="吳剛大廚" required>
             </div>
-            <div class="form-group" id="group-password">
-              <label for="auth-password">密碼</label>
-              <input type="password" id="auth-password" placeholder="請輸入至少 4 碼密碼" autocomplete="current-password">
-            </div>
-            <div id="auth-msg" class="auth-msg hidden"></div>
-            <button type="submit" id="btn-auth-submit" class="btn-primary full-btn">登入月宮廚房</button>
+            <button type="submit" id="btn-p2-submit" class="btn-primary full-btn">開始 2P 雙人同機協作！ 🚀</button>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- 3. Leaderboard Modal -->
+    <!-- 4. Leaderboard Modal (Separate 1P and 2P Tabs) -->
     <div id="leaderboard-modal" class="modal-backdrop hidden">
       <div class="modal-card leaderboard-card glass-panel">
         <div class="modal-header">
@@ -260,6 +284,12 @@
           <button id="btn-leaderboard-close" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body">
+          <!-- 1P / 2P Tabs -->
+          <div class="leaderboard-tabs">
+            <button class="lb-tab-btn active" data-mode="1p" id="lb-tab-1p">🐰 1P 單人天梯榜</button>
+            <button class="lb-tab-btn" data-mode="2p" id="lb-tab-2p">👥 2P 雙人天梯榜</button>
+          </div>
+
           <div class="leaderboard-table-wrapper">
             <table class="leaderboard-table">
               <thead>
@@ -283,13 +313,13 @@
       </div>
     </div>
 
-    <!-- 4. Game Over Settlement Modal -->
+    <!-- 5. Game Over Settlement Modal -->
     <div id="gameover-modal" class="modal-backdrop hidden">
       <div class="modal-card gameover-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">🌕</span>
-            <h2>中秋狂歡宴結算 <small>廚藝評級</small></h2>
+            <h2>中秋狂歡宴結算 <small id="settle-mode-tag">1P 單人模式</small></h2>
           </div>
         </div>
         <div class="modal-body gameover-body">

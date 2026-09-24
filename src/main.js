@@ -1,7 +1,11 @@
 /**
  * Main Application Entry Point
- * Synchronizes Game Simulation, HUD, Order Tickets, Audio, Auth, Leaderboard,
- * 1P/2P Local Co-op, Game Over Settlement & Mobile Controls
+ * Complete SDD Implementation with:
+ * 1. Initial Nickname Entry -> Recipe/Mode Screen Flow
+ * 2. 1P Starts Immediately / 2P Prompts for Player 2 Name
+ * 3. In-Game Mode Switching Locked
+ * 4. 2P Provides 3 Plates (1P Provides 2 Plates)
+ * 5. Separate 1P and 2P Leaderboards
  */
 
 import { InputManager } from './core/InputManager.js';
@@ -16,7 +20,17 @@ class App {
     this.inputManager = new InputManager();
     this.authManager = new AuthManager();
     this.leaderboardManager = new LeaderboardManager();
-    this.gameWorld = new GameWorld(false);
+    
+    // Player names
+    this.p1Name = '玉兔大廚';
+    this.p2Name = '吳剛大廚';
+
+    this.is2PMode = false;
+    this.gameStarted = false;
+    this.isPausedForModal = true;
+    this.currentLbMode = '1p';
+
+    this.gameWorld = new GameWorld(false, this.p1Name, this.p2Name);
     this.renderer = new Renderer2D(this.canvas);
     
     // UI Elements
@@ -30,57 +44,59 @@ class App {
     this.soundToggleBtn = document.getElementById('btn-sound-toggle');
     this.recipeOpenBtn = document.getElementById('btn-recipe-open');
     this.leaderboardOpenBtn = document.getElementById('btn-leaderboard-open');
-    this.modeToggleBtn = document.getElementById('btn-mode-toggle');
     this.desktopHelperBar = document.getElementById('desktop-helper-bar');
 
     // Modals
-    this.tutorialModal = document.getElementById('tutorial-modal');
-    this.tutorialCloseBtn = document.getElementById('btn-tutorial-close');
-    this.tutorialStartBtn = document.getElementById('btn-tutorial-start');
-
     this.authModal = document.getElementById('auth-modal');
     this.authCloseBtn = document.getElementById('btn-auth-close');
     this.authForm = document.getElementById('auth-form');
     this.authMsgEl = document.getElementById('auth-msg');
 
+    this.tutorialModal = document.getElementById('tutorial-modal');
+    this.tutorialHeaderTitle = document.getElementById('tutorial-header-title');
+    this.modeSelectSection = document.getElementById('mode-select-section');
+    this.tutorialCloseBtn = document.getElementById('btn-tutorial-close');
+    this.tutorialStartBtn = document.getElementById('btn-tutorial-start');
+
+    this.player2Modal = document.getElementById('player2-modal');
+    this.p1SummaryName = document.getElementById('p1-summary-name');
+    this.p2Form = document.getElementById('p2-form');
+    this.p2UsernameInput = document.getElementById('p2-username');
+    this.p2CloseBtn = document.getElementById('btn-p2-close');
+
     this.leaderboardModal = document.getElementById('leaderboard-modal');
     this.leaderboardCloseBtn = document.getElementById('btn-leaderboard-close');
     this.leaderboardConfirmBtn = document.getElementById('btn-leaderboard-confirm');
     this.leaderboardTbody = document.getElementById('leaderboard-tbody');
+    this.lbTab1P = document.getElementById('lb-tab-1p');
+    this.lbTab2P = document.getElementById('lb-tab-2p');
 
     this.gameoverModal = document.getElementById('gameover-modal');
     this.settleScoreEl = document.getElementById('settle-score');
     this.settleDishesEl = document.getElementById('settle-dishes');
     this.settleComboEl = document.getElementById('settle-combo');
     this.settleTitleEl = document.getElementById('settle-title');
+    this.settleModeTag = document.getElementById('settle-mode-tag');
     this.settleRestartBtn = document.getElementById('btn-settle-restart');
     this.settleViewLbBtn = document.getElementById('btn-settle-view-leaderboard');
 
-    // State & Caches
-    this.is2PMode = false;
+    // Stats & Tracking
     this.dishesServedCount = 0;
     this.maxComboReached = 1.0;
     this.renderedOrderIds = new Set();
-    this.isPausedForModal = true;
     this.hasRecordedGameOver = false;
 
     this.lastTime = performance.now();
-    this.initPlayerHUD();
     this.initAudioToggle();
-    this.initModeToggle();
-    this.initTutorialModal();
     this.initAuthModal();
+    this.initTutorialModal();
+    this.initPlayer2Modal();
     this.initLeaderboardModal();
     this.initGameOverModal();
     this.initGlobalShortcuts();
     this.initTouchControls();
+    this.updateHelperBar();
     this.startLoop();
-  }
-
-  initPlayerHUD() {
-    if (this.hudPlayerNameEl && this.authManager.currentUser) {
-      this.hudPlayerNameEl.textContent = this.authManager.currentUser.username;
-    }
   }
 
   initAudioToggle() {
@@ -91,53 +107,14 @@ class App {
     });
   }
 
-  setGameMode(is2P) {
-    this.is2PMode = is2P;
-    this.inputManager.is2PMode = is2P;
-    this.gameWorld.set2PMode(is2P);
-
-    if (this.modeToggleBtn) {
-      this.modeToggleBtn.textContent = this.is2PMode ? '👥 2P 雙人' : '👥 1P 單人';
-    }
-
-    const card1P = document.getElementById('mode-select-1p');
-    const card2P = document.getElementById('mode-select-2p');
-    if (card1P && card2P) {
-      if (this.is2PMode) {
-        card1P.classList.remove('active');
-        card2P.classList.add('active');
-        const badge1P = card1P.querySelector('.mode-badge');
-        const badge2P = card2P.querySelector('.mode-badge');
-        if (badge1P) badge1P.textContent = '切換';
-        if (badge2P) badge2P.textContent = '已選擇';
-      } else {
-        card2P.classList.remove('active');
-        card1P.classList.add('active');
-        const badge1P = card1P.querySelector('.mode-badge');
-        const badge2P = card2P.querySelector('.mode-badge');
-        if (badge1P) badge1P.textContent = '已選擇';
-        if (badge2P) badge2P.textContent = '切換';
-      }
-    }
-
-    this.updateHelperBar();
-  }
-
-  initModeToggle() {
-    this.modeToggleBtn?.addEventListener('click', () => {
-      this.setGameMode(!this.is2PMode);
-      this.gameWorld.soundManager.playPickup();
-    });
-  }
-
   updateHelperBar() {
     if (!this.desktopHelperBar) return;
     if (this.is2PMode) {
       this.desktopHelperBar.innerHTML = `
-        <div class="key-hint"><kbd>1P 🐰 玉兔</kbd> WASD 移動 | Space 拿放前拋 | E 切菜洗碗</div>
-        <div class="key-hint"><kbd>2P 🪓 吳剛</kbd> 方向鍵 移動 | K 拿放前拋 | L 切菜洗碗</div>
-        <div class="key-hint"><kbd>H / R</kbd> 食譜</div>
-        <div class="key-hint mode-indicator">👥 2P 雙人協作</div>
+        <div class="key-hint"><kbd>1P 🐰 ${this.p1Name}</kbd> WASD 移動 | Space 拿放前拋 | E 切菜洗碗</div>
+        <div class="key-hint"><kbd>2P 🪓 ${this.p2Name}</kbd> 方向鍵 移動 | K 拿放前拋 | L 切菜洗碗</div>
+        <div class="key-hint"><kbd>H / R</kbd> 查看食譜</div>
+        <div class="key-hint mode-indicator">👥 2P 雙人協作 (3個盤子)</div>
       `;
     } else {
       this.desktopHelperBar.innerHTML = `
@@ -145,56 +122,19 @@ class App {
         <div class="key-hint"><kbd>Space</kbd> 拿放 (短按) / 前拋 (長按)</div>
         <div class="key-hint"><kbd>E</kbd> 備料切菜 / 水槽洗碗</div>
         <div class="key-hint"><kbd>H</kbd> 或 <kbd>R</kbd> 查看食譜</div>
-        <div class="key-hint mode-indicator">1P 單人修練</div>
+        <div class="key-hint mode-indicator">1P 單人修練 (2個盤子)</div>
       `;
     }
   }
 
-  initTutorialModal() {
-    const closeModal = () => {
-      this.tutorialModal?.classList.add('hidden');
-      this.isPausedForModal = false;
-      this.inputManager.reset();
-      this.lastTime = performance.now();
-      this.gameWorld.soundManager.playPickup();
-      this.canvas?.focus();
-    };
-
-    const openModal = () => {
-      this.tutorialModal?.classList.remove('hidden');
-      this.isPausedForModal = true;
-      this.inputManager.reset();
-      this.gameWorld.soundManager.playDrop();
-    };
-
-    const card1P = document.getElementById('mode-select-1p');
-    const card2P = document.getElementById('mode-select-2p');
-    card1P?.addEventListener('click', () => {
-      this.setGameMode(false);
-      this.gameWorld.soundManager.playPickup();
-    });
-    card2P?.addEventListener('click', () => {
-      this.setGameMode(true);
-      this.gameWorld.soundManager.playPickup();
-    });
-
-    this.tutorialStartBtn?.addEventListener('click', closeModal);
-    this.tutorialCloseBtn?.addEventListener('click', closeModal);
-    this.recipeOpenBtn?.addEventListener('click', openModal);
-  }
-
+  // Step 1: Initial Nickname / Auth Entry
   initAuthModal() {
     this.hudPlayerBadge?.addEventListener('click', () => {
       this.authModal?.classList.remove('hidden');
       this.isPausedForModal = true;
     });
 
-    this.authCloseBtn?.addEventListener('click', () => {
-      this.authModal?.classList.add('hidden');
-      this.isPausedForModal = false;
-    });
-
-    let currentTab = 'login';
+    let currentTab = 'guest';
     const tabBtns = document.querySelectorAll('.auth-tab-btn');
     const pwdGroup = document.getElementById('group-password');
     const submitBtn = document.getElementById('btn-auth-submit');
@@ -211,17 +151,17 @@ class App {
 
         if (currentTab === 'guest') {
           if (pwdGroup) pwdGroup.style.display = 'none';
-          if (submitBtn) submitBtn.textContent = '以訪客身份直接開玩';
-          if (usernameInput) usernameInput.placeholder = '訪客暱稱 (選填)';
+          if (submitBtn) submitBtn.textContent = '確定並進入料理手冊 ➔';
+          if (usernameInput) usernameInput.placeholder = '請輸入大廚暱稱 (例如: 玉兔大廚)';
           if (passwordInput) passwordInput.required = false;
         } else if (currentTab === 'register') {
           if (pwdGroup) pwdGroup.style.display = 'flex';
-          if (submitBtn) submitBtn.textContent = '註冊並登入月宮';
+          if (submitBtn) submitBtn.textContent = '註冊並進入料理手冊 ➔';
           if (usernameInput) usernameInput.placeholder = '請輸入 2~12 字大廚名稱';
           if (passwordInput) passwordInput.required = true;
         } else {
           if (pwdGroup) pwdGroup.style.display = 'flex';
-          if (submitBtn) submitBtn.textContent = '登入月宮廚房';
+          if (submitBtn) submitBtn.textContent = '登入並進入料理手冊 ➔';
           if (usernameInput) usernameInput.placeholder = '請輸入帳號 / 暱稱';
           if (passwordInput) passwordInput.required = true;
         }
@@ -230,7 +170,7 @@ class App {
 
     this.authForm?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const u = usernameInput?.value || '';
+      const u = usernameInput?.value.trim() || '玉兔大廚';
       const p = passwordInput?.value || '';
       let res;
 
@@ -243,18 +183,16 @@ class App {
       }
 
       if (res.success) {
-        if (this.authMsgEl) {
-          this.authMsgEl.textContent = `歡迎，${res.user.username}！`;
-          this.authMsgEl.className = 'auth-msg success';
-          this.authMsgEl.classList.remove('hidden');
-        }
-        this.initPlayerHUD();
-        this.gameWorld.soundManager.playOrderSuccess();
+        this.p1Name = res.user.username || '玉兔大廚';
+        if (this.hudPlayerNameEl) this.hudPlayerNameEl.textContent = this.p1Name;
+        if (this.p1SummaryName) this.p1SummaryName.textContent = this.p1Name;
 
-        setTimeout(() => {
-          this.authModal?.classList.add('hidden');
-          this.isPausedForModal = false;
-        }, 600);
+        this.gameWorld.soundManager.playOrderSuccess();
+        this.authModal?.classList.add('hidden');
+
+        // Proceed to Step 2: Tutorial & Mode Selection
+        this.tutorialModal?.classList.remove('hidden');
+        this.isPausedForModal = true;
       } else {
         if (this.authMsgEl) {
           this.authMsgEl.textContent = res.message;
@@ -266,9 +204,124 @@ class App {
     });
   }
 
+  // Step 2: Tutorial & Mode Selection
+  initTutorialModal() {
+    const card1P = document.getElementById('mode-select-1p');
+    const card2P = document.getElementById('mode-select-2p');
+
+    // Select 1P: Starts immediately!
+    card1P?.addEventListener('click', () => {
+      this.startGame(false);
+    });
+
+    // Select 2P: Prompts for Player 2 name!
+    card2P?.addEventListener('click', () => {
+      this.tutorialModal?.classList.add('hidden');
+      if (this.p1SummaryName) this.p1SummaryName.textContent = this.p1Name;
+      this.player2Modal?.classList.remove('hidden');
+      this.p2UsernameInput?.focus();
+      this.gameWorld.soundManager.playPickup();
+    });
+
+    this.tutorialStartBtn?.addEventListener('click', () => {
+      if (!this.gameStarted) {
+        this.startGame(false);
+      } else {
+        // Just dismiss in-game recipe manual
+        this.tutorialModal?.classList.add('hidden');
+        this.isPausedForModal = false;
+        this.inputManager.reset();
+        this.lastTime = performance.now();
+        this.gameWorld.soundManager.playPickup();
+        this.canvas?.focus();
+      }
+    });
+
+    this.tutorialCloseBtn?.addEventListener('click', () => {
+      if (!this.gameStarted) {
+        this.startGame(false);
+      } else {
+        this.tutorialModal?.classList.add('hidden');
+        this.isPausedForModal = false;
+        this.inputManager.reset();
+        this.lastTime = performance.now();
+        this.canvas?.focus();
+      }
+    });
+
+    this.recipeOpenBtn?.addEventListener('click', () => {
+      this.tutorialModal?.classList.remove('hidden');
+      this.isPausedForModal = true;
+      this.inputManager.reset();
+      this.gameWorld.soundManager.playDrop();
+    });
+  }
+
+  // Step 3: Player 2 Name Input Modal
+  initPlayer2Modal() {
+    this.p2Form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.p2Name = this.p2UsernameInput?.value.trim() || '吳剛大廚';
+      this.player2Modal?.classList.add('hidden');
+      this.startGame(true);
+    });
+
+    this.p2CloseBtn?.addEventListener('click', () => {
+      this.player2Modal?.classList.add('hidden');
+      this.tutorialModal?.classList.remove('hidden');
+    });
+  }
+
+  // Core Game Start Dispatcher
+  startGame(is2P) {
+    this.gameStarted = true;
+    this.is2PMode = is2P;
+    this.inputManager.is2PMode = is2P;
+    this.currentLbMode = is2P ? '2p' : '1p';
+
+    // Lock mode selection for in-game recipe manual
+    if (this.modeSelectSection) {
+      this.modeSelectSection.style.display = 'none';
+    }
+    if (this.tutorialHeaderTitle) {
+      this.tutorialHeaderTitle.innerHTML = '月宮大廚修練手冊 <small>中秋烤肉食譜手冊 (按 H / R 或 空白鍵 關閉)</small>';
+    }
+    if (this.tutorialStartBtn) {
+      this.tutorialStartBtn.textContent = '返回廚房繼續烤肉 (Space / Enter / Esc)';
+    }
+
+    // Hide all popups
+    this.authModal?.classList.add('hidden');
+    this.tutorialModal?.classList.add('hidden');
+    this.player2Modal?.classList.add('hidden');
+    this.gameoverModal?.classList.add('hidden');
+    this.leaderboardModal?.classList.add('hidden');
+
+    // Create fresh GameWorld with correct plate count & player names
+    this.gameWorld = new GameWorld(this.is2PMode, this.p1Name, this.p2Name);
+    this.dishesServedCount = 0;
+    this.maxComboReached = 1.0;
+    this.renderedOrderIds.clear();
+    this.hasRecordedGameOver = false;
+
+    // Update HUD
+    if (this.hudPlayerNameEl) {
+      this.hudPlayerNameEl.textContent = this.is2PMode ? `${this.p1Name} & ${this.p2Name}` : this.p1Name;
+    }
+
+    this.isPausedForModal = false;
+    this.inputManager.reset();
+    this.lastTime = performance.now();
+    this.updateHelperBar();
+    this.canvas?.focus();
+    this.gameWorld.soundManager.playOrderSuccess();
+  }
+
+  // Leaderboard Modal (Separate 1P and 2P)
   initLeaderboardModal() {
-    const openLB = () => {
-      this.renderLeaderboardTable();
+    const openLB = (mode = this.currentLbMode) => {
+      this.currentLbMode = mode;
+      this.renderLeaderboardTable(mode);
       this.leaderboardModal?.classList.remove('hidden');
       this.isPausedForModal = true;
       this.gameWorld.soundManager.playPickup();
@@ -276,17 +329,43 @@ class App {
 
     const closeLB = () => {
       this.leaderboardModal?.classList.add('hidden');
-      this.isPausedForModal = false;
+      if (this.gameStarted && !this.gameWorld.isGameOver) {
+        this.isPausedForModal = false;
+        this.inputManager.reset();
+        this.lastTime = performance.now();
+        this.canvas?.focus();
+      }
     };
 
-    this.leaderboardOpenBtn?.addEventListener('click', openLB);
+    this.lbTab1P?.addEventListener('click', () => {
+      this.currentLbMode = '1p';
+      this.renderLeaderboardTable('1p');
+    });
+
+    this.lbTab2P?.addEventListener('click', () => {
+      this.currentLbMode = '2p';
+      this.renderLeaderboardTable('2p');
+    });
+
+    this.leaderboardOpenBtn?.addEventListener('click', () => openLB(this.is2PMode ? '2p' : '1p'));
     this.leaderboardCloseBtn?.addEventListener('click', closeLB);
     this.leaderboardConfirmBtn?.addEventListener('click', closeLB);
   }
 
-  renderLeaderboardTable() {
+  renderLeaderboardTable(mode = '1p') {
     if (!this.leaderboardTbody) return;
-    const scores = this.leaderboardManager.getScores();
+
+    if (this.lbTab1P && this.lbTab2P) {
+      if (mode === '2p') {
+        this.lbTab1P.classList.remove('active');
+        this.lbTab2P.classList.add('active');
+      } else {
+        this.lbTab2P.classList.remove('active');
+        this.lbTab1P.classList.add('active');
+      }
+    }
+
+    const scores = this.leaderboardManager.getScores(mode);
 
     let html = '';
     scores.forEach((entry, idx) => {
@@ -312,13 +391,15 @@ class App {
 
   initGameOverModal() {
     this.settleRestartBtn?.addEventListener('click', () => {
-      this.restartGame();
+      this.gameoverModal?.classList.add('hidden');
+      this.startGame(this.is2PMode);
     });
 
     this.settleViewLbBtn?.addEventListener('click', () => {
       this.gameoverModal?.classList.add('hidden');
+      this.currentLbMode = this.is2PMode ? '2p' : '1p';
+      this.renderLeaderboardTable(this.currentLbMode);
       this.leaderboardModal?.classList.remove('hidden');
-      this.renderLeaderboardTable();
     });
   }
 
@@ -329,10 +410,11 @@ class App {
 
     const score = this.gameWorld.score;
     const maxCombo = this.maxComboReached;
-    const username = this.authManager.currentUser?.username || '訪客大廚';
+    const mode = this.is2PMode ? '2p' : '1p';
+    const displayName = this.is2PMode ? `${this.p1Name} & ${this.p2Name}` : this.p1Name;
 
     this.authManager.recordGame(score);
-    this.leaderboardManager.addScore(username, score, maxCombo);
+    this.leaderboardManager.addScore(displayName, score, maxCombo, mode);
 
     let title = '👨‍🍳 月宮學徒';
     if (score >= 2500) title = '👑 米其林月宮神廚 (天下第一)';
@@ -344,52 +426,34 @@ class App {
     if (this.settleDishesEl) this.settleDishesEl.textContent = `${this.dishesServedCount} 份`;
     if (this.settleComboEl) this.settleComboEl.textContent = `x${maxCombo.toFixed(1)}`;
     if (this.settleTitleEl) this.settleTitleEl.textContent = `🎉 ${title}`;
+    if (this.settleModeTag) this.settleModeTag.textContent = this.is2PMode ? '👥 2P 雙人協作模式' : '🐰 1P 單人修練模式';
 
     this.gameWorld.soundManager.playOrderSuccess();
     this.gameoverModal?.classList.remove('hidden');
-  }
-
-  restartGame() {
-    this.gameoverModal?.classList.add('hidden');
-    this.gameWorld = new GameWorld(this.is2PMode);
-    this.dishesServedCount = 0;
-    this.maxComboReached = 1.0;
-    this.renderedOrderIds.clear();
-    this.hasRecordedGameOver = false;
-    this.isPausedForModal = false;
-    this.lastTime = performance.now();
-    this.gameWorld.soundManager.playPickup();
   }
 
   initGlobalShortcuts() {
     window.addEventListener('keydown', (e) => {
       const isTutorialOpen = !this.tutorialModal?.classList.contains('hidden');
 
-      // Allow 1 / 2 key to switch mode during modal or game
-      if (e.code === 'Digit1' || e.code === 'Numpad1') {
-        this.setGameMode(false);
-        this.gameWorld.soundManager.playPickup();
-      } else if (e.code === 'Digit2' || e.code === 'Numpad2') {
-        this.setGameMode(true);
-        this.gameWorld.soundManager.playPickup();
-      }
-
-      // Toggle or Close Cookbook modal with H, R, Space, Enter, Escape
+      // Toggle or Close Cookbook manual with H, R, Space, Enter, Escape
       if (e.code === 'KeyH' || e.code === 'KeyR') {
         if (isTutorialOpen) {
-          this.tutorialModal?.classList.add('hidden');
-          this.isPausedForModal = false;
-          this.inputManager.reset();
-          this.lastTime = performance.now();
-          this.gameWorld.soundManager.playPickup();
-          this.canvas?.focus();
-        } else {
+          if (this.gameStarted) {
+            this.tutorialModal?.classList.add('hidden');
+            this.isPausedForModal = false;
+            this.inputManager.reset();
+            this.lastTime = performance.now();
+            this.gameWorld.soundManager.playPickup();
+            this.canvas?.focus();
+          }
+        } else if (this.gameStarted && !this.gameWorld.isGameOver) {
           this.tutorialModal?.classList.remove('hidden');
           this.isPausedForModal = true;
           this.inputManager.reset();
           this.gameWorld.soundManager.playDrop();
         }
-      } else if (isTutorialOpen && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
+      } else if (isTutorialOpen && this.gameStarted && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
         e.preventDefault();
         this.tutorialModal?.classList.add('hidden');
         this.isPausedForModal = false;
@@ -448,7 +512,7 @@ class App {
       const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
       this.lastTime = currentTime;
 
-      if (!this.isPausedForModal) {
+      if (!this.isPausedForModal && this.gameStarted) {
         this.gameWorld.update(dt, this.inputManager);
 
         if (this.gameWorld.combo > this.maxComboReached) {
@@ -524,53 +588,38 @@ class App {
           </div>
           <div class="order-ingredients">${ingredientBadges}</div>
           <div class="order-timer-bar">
-            <div class="order-timer-fill" style="width: 100%;"></div>
+            <div class="order-timer-fill" id="timer-fill-${order.id}"></div>
           </div>
         `;
         this.ordersContainer.appendChild(card);
         this.renderedOrderIds.add(order.id);
       }
 
-      const fill = card.querySelector('.order-timer-fill');
+      const fill = document.getElementById(`timer-fill-${order.id}`);
       if (fill) {
-        const progress = order.getProgress();
-        const pct = Math.floor(progress * 100);
+        const pct = Math.max(0, Math.min(100, (order.remainingTime / order.totalPatience) * 100));
         fill.style.width = `${pct}%`;
-
-        fill.classList.remove('warning', 'danger');
-        if (progress < 0.25) fill.classList.add('danger');
-        else if (progress < 0.5) fill.classList.add('warning');
+        fill.className = pct > 50 ? 'order-timer-fill' : pct > 25 ? 'order-timer-fill warning' : 'order-timer-fill danger';
       }
     }
   }
 
   updateHUDPrompt() {
+    if (!this.promptEl) return;
     const prompt = this.gameWorld.interactionPrompt;
-    if (prompt && this.promptEl && !this.isPausedForModal) {
+    if (prompt) {
       this.promptEl.classList.remove('hidden');
-      const p1 = this.gameWorld.player1;
-      
-      const rect = this.canvas.getBoundingClientRect();
-      const scaleX = rect.width / this.canvas.clientWidth;
-      const scaleY = rect.height / this.canvas.clientHeight;
-
-      const screenX = rect.left + p1.x * scaleX;
-      const screenY = rect.top + (p1.y - p1.radius - 24) * scaleY;
-
-      this.promptEl.style.left = `${screenX}px`;
-      this.promptEl.style.top = `${screenY}px`;
-
-      const keyBadge = this.promptEl.querySelector('.key-badge');
-      const textEl = this.promptEl.querySelector('.prompt-text');
-      if (keyBadge) keyBadge.textContent = prompt.key;
-      if (textEl) textEl.textContent = prompt.text;
-    } else if (this.promptEl) {
+      const badge = this.promptEl.querySelector('.key-badge');
+      const txt = this.promptEl.querySelector('.prompt-text');
+      if (badge) badge.textContent = prompt.key;
+      if (txt) txt.textContent = prompt.text;
+    } else {
       this.promptEl.classList.add('hidden');
     }
   }
 }
 
-// Start game
+// Bootstrap Application on DOM Ready
 window.addEventListener('DOMContentLoaded', () => {
   new App();
 });
