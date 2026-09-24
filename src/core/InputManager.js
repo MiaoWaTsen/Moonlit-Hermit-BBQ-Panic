@@ -1,5 +1,6 @@
 /**
- * InputManager: Handles Keyboard (WASD, Arrows, Space, F, E, G) & Touch Joysticks
+ * InputManager: Handles Keyboard & Touch Joysticks
+ * Supports Tap for Pickup/Drop & Hold/Release for Item Throwing
  */
 
 export class InputManager {
@@ -7,8 +8,14 @@ export class InputManager {
     this.keys = new Set();
     this.virtualVector = { x: 0, y: 0 };
     
-    // Action trigger flags (single press events)
+    // Pickup / Drop / Throw States
+    this.pickupPressTime = 0;
+    this.isPickupHeld = false;
     this.pickupJustPressed = false;
+    this.throwJustReleased = false;
+    this.throwPower = 1.0;
+
+    // Interaction (E / G) States
     this.interactJustPressed = false;
     this.isInteractingHeld = false;
 
@@ -17,14 +24,14 @@ export class InputManager {
 
   initKeyboard() {
     window.addEventListener('keydown', (e) => {
-      // Prevent default scrolling on game control keys
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
         e.preventDefault();
       }
 
       if (!this.keys.has(e.code)) {
         if (e.code === 'Space' || e.code === 'KeyF') {
-          this.pickupJustPressed = true;
+          this.isPickupHeld = true;
+          this.pickupPressTime = performance.now();
         }
         if (e.code === 'KeyE' || e.code === 'KeyG') {
           this.interactJustPressed = true;
@@ -40,13 +47,37 @@ export class InputManager {
 
     window.addEventListener('keyup', (e) => {
       this.keys.delete(e.code);
+
+      if (e.code === 'Space' || e.code === 'KeyF') {
+        if (this.isPickupHeld) {
+          const holdDuration = performance.now() - this.pickupPressTime;
+          this.isPickupHeld = false;
+
+          if (holdDuration < 220) {
+            // Quick tap: Normal Pickup / Drop
+            this.pickupJustPressed = true;
+          } else {
+            // Long press release: Throw Item!
+            this.throwJustReleased = true;
+            this.throwPower = Math.min(1.4, 0.7 + (holdDuration / 600));
+          }
+        }
+      }
+
       if (e.code === 'KeyE' || e.code === 'KeyG') {
         this.isInteractingHeld = false;
       }
     });
   }
 
-  // Get movement direction vector for Player 1 (Normalized -1 to 1)
+  // Get current throw charging progress (0 to 1)
+  getThrowCharge() {
+    if (!this.isPickupHeld) return 0;
+    const holdDuration = performance.now() - this.pickupPressTime;
+    if (holdDuration < 150) return 0;
+    return Math.min(1.0, (holdDuration - 150) / 400);
+  }
+
   getP1Movement() {
     let dx = 0;
     let dy = 0;
@@ -56,7 +87,6 @@ export class InputManager {
     if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) dx -= 1;
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) dx += 1;
 
-    // Combine with virtual touch joystick if active
     if (this.virtualVector.x !== 0 || this.virtualVector.y !== 0) {
       dx = this.virtualVector.x;
       dy = this.virtualVector.y;
@@ -71,11 +101,17 @@ export class InputManager {
     return { x: dx, y: dy };
   }
 
-  // Consume single-frame action presses
   consumePickupPress() {
     const pressed = this.pickupJustPressed;
     this.pickupJustPressed = false;
     return pressed;
+  }
+
+  consumeThrowRelease() {
+    const released = this.throwJustReleased;
+    const power = this.throwPower;
+    this.throwJustReleased = false;
+    return released ? power : null;
   }
 
   consumeInteractPress() {

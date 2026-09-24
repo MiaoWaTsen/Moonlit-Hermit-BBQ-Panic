@@ -2,7 +2,7 @@
  * MapGrid: Manages 2D grid tiles, station types, and stationary items on counters
  */
 
-import { MAP_COLS, MAP_ROWS, TILE_TYPES, TILE_SIZE, ITEM_TYPES } from '../core/Constants.js';
+import { MAP_COLS, MAP_ROWS, TILE_TYPES, ITEM_TYPES } from '../core/Constants.js';
 import { Item } from './Item.js';
 
 export class MapGrid {
@@ -11,7 +11,7 @@ export class MapGrid {
     this.rows = MAP_ROWS;
     this.grid = [];
     this.itemsOnCounters = new Map(); // key: "x,y", value: Item object
-    this.stationStates = new Map();   // key: "x,y", value: object with cooking/prep states
+    this.washProgress = new Map();     // key: "x,y", value: 0.0 to 1.0
     
     this.initMap();
   }
@@ -21,10 +21,10 @@ export class MapGrid {
     // Legend:
     // W = WALL, F = FLOOR, C = COUNTER
     // B = CRATE_BEEF, V = CRATE_VEGGIE, T = CRATE_TOAST
-    // K = CUTTING_BOARD, G = GRILL, P = PLATE_STACK
+    // K = CUTTING_BOARD, G = GRILL
     // S = SINK, D = DELIVERY, X = TRASH
     const mapLayout = [
-      ['W', 'D', 'D', 'C', 'P', 'P', 'C', 'K', 'K', 'C', 'K', 'K', 'C', 'X', 'X', 'W'],
+      ['W', 'D', 'D', 'C', 'C', 'C', 'C', 'K', 'K', 'C', 'K', 'K', 'C', 'X', 'X', 'W'],
       ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
       ['B', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'T'],
       ['B', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'T'],
@@ -45,7 +45,6 @@ export class MapGrid {
       'T': TILE_TYPES.CRATE_TOAST,
       'K': TILE_TYPES.CUTTING_BOARD,
       'G': TILE_TYPES.GRILL,
-      'P': TILE_TYPES.PLATE_STACK,
       'S': TILE_TYPES.SINK,
       'D': TILE_TYPES.DELIVERY,
       'X': TILE_TYPES.TRASH
@@ -58,14 +57,13 @@ export class MapGrid {
         const symbol = mapLayout[y]?.[x] || 'W';
         const type = typeMapping[symbol] || TILE_TYPES.FLOOR;
         row.push(type);
-
-        // Initialize station internal state if needed
-        if (type === TILE_TYPES.GRILL) {
-          this.stationStates.set(`${x},${y}`, { isCooking: false, heatTime: 0 });
-        }
       }
       this.grid.push(row);
     }
+
+    // Initialize exactly TWO clean plates on upper counters
+    this.setItemAt(4, 0, Item.create(ITEM_TYPES.PLATE));
+    this.setItemAt(5, 0, Item.create(ITEM_TYPES.PLATE));
   }
 
   getTileType(gridX, gridY) {
@@ -94,10 +92,25 @@ export class MapGrid {
       this.itemsOnCounters.set(`${gridX},${gridY}`, item);
     } else {
       this.itemsOnCounters.delete(`${gridX},${gridY}`);
+      this.washProgress.delete(`${gridX},${gridY}`);
     }
   }
 
-  getStationState(gridX, gridY) {
-    return this.stationStates.get(`${gridX},${gridY}`);
+  getWashProgress(gridX, gridY) {
+    return this.washProgress.get(`${gridX},${gridY}`) || 0;
+  }
+
+  advanceWash(gridX, gridY, dt) {
+    const current = this.getWashProgress(gridX, gridY);
+    const updated = Math.min(1.0, current + dt / 2.0); // 2 seconds to wash clean
+    this.washProgress.set(`${gridX},${gridY}`, updated);
+    
+    if (updated >= 1.0) {
+      // Washed clean! Transform to clean plate
+      this.setItemAt(gridX, gridY, Item.create(ITEM_TYPES.PLATE));
+      this.washProgress.delete(`${gridX},${gridY}`);
+      return true;
+    }
+    return false;
   }
 }

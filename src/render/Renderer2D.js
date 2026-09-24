@@ -1,6 +1,7 @@
 /**
  * Renderer2D: High-DPI Canvas 2D Game Renderer with Rich Mid-Autumn Aesthetic
- * Includes Progress Bars for Cutting & BBQ Grills, State Animations and Particle Rendering
+ * Includes Progress Bars for Cutting, BBQ Grills, Dishwashing,
+ * Flying Items in Parabolic Arc, and Throw Trajectory Guides
  */
 
 import { TILE_SIZE, MAP_COLS, MAP_ROWS, CANVAS_WIDTH, CANVAS_HEIGHT, TILE_TYPES, ITEM_TYPES } from '../core/Constants.js';
@@ -25,7 +26,7 @@ export class Renderer2D {
     this.ctx.imageSmoothingEnabled = true;
   }
 
-  render(world) {
+  render(world, inputManager) {
     this.animClock += 0.05;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -42,12 +43,24 @@ export class Renderer2D {
     // 4. Draw Players
     for (const player of world.players) {
       this.renderPlayer(player);
+      // Draw Throw Trajectory if charging throw
+      if (inputManager) {
+        const charge = inputManager.getThrowCharge();
+        if (charge > 0 && player.heldItem) {
+          this.renderThrowTrajectory(player, charge);
+        }
+      }
     }
 
-    // 5. Draw Progress Bars (Cutting / Cooking / Washing)
+    // 5. Draw Flying Airborne Items
+    for (const flying of world.flyingItems) {
+      flying.render(ctx);
+    }
+
+    // 6. Draw Progress Bars (Cutting / Cooking / Washing)
     this.renderStationProgressBars(world.mapGrid);
 
-    // 6. Draw Particle System
+    // 7. Draw Particle System
     world.particleSystem.render(ctx);
   }
 
@@ -108,7 +121,6 @@ export class Renderer2D {
     ctx.save();
     switch (type) {
       case TILE_TYPES.COUNTER:
-        // Polished mahogany prep table
         ctx.fillStyle = '#7a4d33';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
@@ -116,7 +128,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.CRATE_BEEF:
-        // Red wooden crate
         ctx.fillStyle = '#8b261e';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.font = '22px sans-serif';
@@ -127,7 +138,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.CRATE_VEGGIE:
-        // Green wooden crate
         ctx.fillStyle = '#1e6b37';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.font = '22px sans-serif';
@@ -138,7 +148,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.CRATE_TOAST:
-        // Golden wooden crate
         ctx.fillStyle = '#b8860b';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.font = '22px sans-serif';
@@ -149,7 +158,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.CUTTING_BOARD:
-        // Light wood chopping board
         ctx.fillStyle = '#9e6d48';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         ctx.fillStyle = '#eed6aa';
@@ -162,7 +170,6 @@ export class Renderer2D {
         break;
 
       case TILE_TYPES.GRILL:
-        // Charcoal BBQ grill with dynamic glowing coals
         ctx.fillStyle = '#22252c';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
         
@@ -177,7 +184,6 @@ export class Renderer2D {
         ctx.fillStyle = grad;
         ctx.fillRect(px + 6, py + 6, TILE_SIZE - 12, TILE_SIZE - 12);
         
-        // Grill wire mesh
         ctx.strokeStyle = '#757575';
         ctx.lineWidth = 1.5;
         for (let i = 10; i < TILE_SIZE - 6; i += 8) {
@@ -187,16 +193,6 @@ export class Renderer2D {
           ctx.stroke();
         }
         this.drawStationLabel(ctx, px, py, '炭火烤爐');
-        break;
-
-      case TILE_TYPES.PLATE_STACK:
-        ctx.fillStyle = '#3a4a6b';
-        ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-        ctx.font = '22px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🍽️', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
-        this.drawStationLabel(ctx, px, py, '餐盤架');
         break;
 
       case TILE_TYPES.SINK:
@@ -265,19 +261,23 @@ export class Renderer2D {
         // 2. BBQ Grill Cooking Progress Bar & Warnings
         if (type === TILE_TYPES.GRILL) {
           if (item.isBurnt()) {
-            // Burnt state indicator
             this.drawStatusTag(ctx, px + TILE_SIZE / 2, py - 6, '⬛ 烤焦了！', '#e74c3c');
           } else if (item.isBurningWarning()) {
-            // Warning blinking bar
             const blink = Math.sin(this.animClock * 15) > 0;
             const progress = (item.cookProgress - 1.0) / 1.0;
             this.drawProgressBar(ctx, px, py - 6, progress, blink ? '#ff1744' : '#ff9100', '⚠️');
           } else if (item.isPerfect()) {
-            // Perfect cooked state
             this.drawStatusTag(ctx, px + TILE_SIZE / 2, py - 6, '✨ 熟了！', '#2ecc71');
           } else if (item.cookProgress > 0) {
-            // Cooking towards perfect
             this.drawProgressBar(ctx, px, py - 6, item.cookProgress, '#ff9800', '🔥');
+          }
+        }
+
+        // 3. Sink Washing Progress Bar
+        if (type === TILE_TYPES.SINK && item.isDirtyPlate()) {
+          const washProg = mapGrid.getWashProgress(x, y);
+          if (washProg > 0 && washProg < 1.0) {
+            this.drawProgressBar(ctx, px, py - 6, washProg, '#00e5ff', '🚰');
           }
         }
       }
@@ -291,14 +291,12 @@ export class Renderer2D {
     const py = y;
 
     ctx.save();
-    // Background bar
     ctx.fillStyle = 'rgba(10, 15, 25, 0.85)';
     ctx.fillRect(px, py, barWidth, barHeight);
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.lineWidth = 1;
     ctx.strokeRect(px, py, barWidth, barHeight);
 
-    // Progress fill
     ctx.fillStyle = color;
     ctx.fillRect(px + 1, py + 1, Math.max(0, (barWidth - 2) * Math.min(progress, 1.0)), barHeight - 2);
 
@@ -317,7 +315,6 @@ export class Renderer2D {
     const textWidth = ctx.measureText(text).width;
     const padding = 5;
     
-    // Background capsule
     ctx.fillStyle = bgColor;
     ctx.beginPath();
     ctx.roundRect(cx - textWidth / 2 - padding, cy - 6, textWidth + padding * 2, 14, 7);
@@ -326,7 +323,6 @@ export class Renderer2D {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Text
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -346,6 +342,31 @@ export class Renderer2D {
     ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
     ctx.shadowBlur = 8;
     ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+    ctx.restore();
+  }
+
+  renderThrowTrajectory(player, charge) {
+    const ctx = this.ctx;
+    const cx = player.x;
+    const cy = player.y;
+    const dirX = player.facing.x;
+    const dirY = player.facing.y;
+    const distance = (TILE_SIZE * 2.5) * (0.5 + charge * 0.7);
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + dirX * distance, cy + dirY * distance);
+    ctx.stroke();
+
+    // Target landing circle
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+    ctx.beginPath();
+    ctx.arc(cx + dirX * distance, cy + dirY * distance, 12, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
@@ -370,7 +391,7 @@ export class Renderer2D {
     ctx.arc(cx, cy, player.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Chef Red Scarf / Bandana
+    // Chef Red Scarf
     ctx.fillStyle = '#e74c3c';
     ctx.beginPath();
     ctx.arc(cx, cy + 4, player.radius * 0.9, 0.2 * Math.PI, 0.8 * Math.PI);
@@ -431,7 +452,7 @@ export class Renderer2D {
     ctx.translate(x, y);
     ctx.scale(scale, scale);
 
-    // If it's a Plate
+    // If it's a Clean Plate
     if (item.isPlate()) {
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#c5d1e8';
@@ -455,6 +476,22 @@ export class Renderer2D {
         ctx.fillText(icons, 0, 0);
       }
     } 
+    // If it's a Dirty Plate
+    else if (item.isDirtyPlate()) {
+      ctx.fillStyle = '#cfd8dc';
+      ctx.strokeStyle = '#78909c';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Oil stains & dirty bubbles
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🧼', 0, 0);
+    }
     // If it's single food or object
     else {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
