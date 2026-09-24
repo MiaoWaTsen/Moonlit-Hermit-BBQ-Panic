@@ -535,6 +535,11 @@ class App {
 
   initGlobalShortcuts() {
     window.addEventListener('keydown', (e) => {
+      // Do NOT intercept shortcuts when typing in input boxes
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
+
       const isTutorialOpen = !this.tutorialModal?.classList.contains('hidden');
 
       // Toggle or Close Cookbook manual with H, R, Space, Enter, Escape

@@ -55,6 +55,11 @@ export class InputManager {
     });
 
     window.addEventListener('keydown', (e) => {
+      // Do NOT intercept keys when user is typing in an input field!
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
+
       // Allow browser shortcuts like F12, Ctrl+R, etc.
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyK', 'KeyL'].includes(e.code)) {
         e.preventDefault();
@@ -91,6 +96,10 @@ export class InputManager {
     });
 
     window.addEventListener('keyup', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
+
       this.keys.delete(e.code);
 
       // P1 Pickup / Throw Release
