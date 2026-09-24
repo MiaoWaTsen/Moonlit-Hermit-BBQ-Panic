@@ -34,8 +34,28 @@ export class InputManager {
     this.initKeyboard();
   }
 
+  reset() {
+    this.keys.clear();
+    this.p1IsPickupHeld = false;
+    this.p1PickupJustPressed = false;
+    this.p1ThrowJustReleased = false;
+    this.p1IsInteractingHeld = false;
+    this.p1InteractJustPressed = false;
+
+    this.p2IsPickupHeld = false;
+    this.p2PickupJustPressed = false;
+    this.p2ThrowJustReleased = false;
+    this.p2IsInteractingHeld = false;
+    this.p2InteractJustPressed = false;
+  }
+
   initKeyboard() {
+    window.addEventListener('blur', () => {
+      this.reset();
+    });
+
     window.addEventListener('keydown', (e) => {
+      // Allow browser shortcuts like F12, Ctrl+R, etc.
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyK', 'KeyL'].includes(e.code)) {
         e.preventDefault();
       }

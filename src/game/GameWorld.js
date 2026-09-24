@@ -17,8 +17,8 @@ export class GameWorld {
     this.mapGrid = new MapGrid();
     this.is2PMode = is2P;
 
-    this.player1 = new Player('p1', '月白之隱 (玉兔大廚)', 3, 3, '🐰', '#ffd700');
-    this.player2 = new Player('p2', '廣寒神將 (吳剛大廚)', 9, 3, '🪓', '#e74c3c');
+    this.player1 = new Player('p1', '月白之隱 (玉兔大廚)', 2, 4, '🐰', '#ffd700');
+    this.player2 = new Player('p2', '廣寒神將 (吳剛大廚)', 8, 4, '🪓', '#e74c3c');
     
     this.players = this.is2PMode ? [this.player1, this.player2] : [this.player1];
     

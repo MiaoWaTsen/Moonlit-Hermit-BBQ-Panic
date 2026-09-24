@@ -574,6 +574,118 @@ html, body {
   letter-spacing: 0.5px;
 }
 
+/* Mode Selection Cards */
+.mode-select-section {
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.mode-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.mode-card {
+  background: rgba(18, 26, 44, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+}
+
+.mode-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(30, 42, 70, 0.85);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.mode-card.active {
+  border-color: var(--gold-bright);
+  background: linear-gradient(135deg, rgba(245, 176, 65, 0.22) 0%, rgba(26, 37, 64, 0.9) 100%);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.35), inset 0 0 12px rgba(255, 215, 0, 0.15);
+}
+
+.mode-card .mode-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mode-card.active .mode-icon {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-glow);
+}
+
+.mode-card .mode-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mode-card .mode-info h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.mode-card.active .mode-info h4 {
+  color: var(--gold-bright);
+}
+
+.mode-card .mode-info p {
+  font-size: 0.72rem;
+  color: #a8bedd;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.mode-card .mode-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #9bb0d3;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.mode-card.active .mode-badge {
+  background: var(--gold-bright);
+  color: #0d1322;
+  font-weight: 900;
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+.modal-footer .start-btn {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 12px 32px;
+  box-shadow: 0 4px 20px rgba(245, 176, 65, 0.4);
+}
+
 /* Steps Grid */
 .steps-grid {
   display: grid;

@@ -69,40 +69,41 @@
 我們採取小步疊代、功能逐一實作並分段 Commit 的策略：
 
 ### 📌 Milestone 1: 基礎架構與網格移動引擎
-- [ ] 建立專案骨架（Vite + Modular ES6 + CSS Design Tokens）。
-- [ ] 建立 Canvas 2D 網格地圖渲染系統（地板、障礙牆面、工作台輪廓）。
-- [ ] 實作單人角色移動物理（碰撞檢測、平滑轉向、網格對齊）。
-- [ ] 實作物件拿取與放下（Pickup & Drop）機制。
+- [x] 建立專案骨架（Vite + Modular ES6 + CSS Design Tokens）。
+- [x] 建立 Canvas 2D 網格地圖渲染系統（地板、障礙牆面、工作台輪廓）。
+- [x] 實作單人角色移動物理（碰撞檢測、平滑轉向、網格對齊）。
+- [x] 實作物件拿取與放下（Pickup & Drop）機制。
 - *Commit: `feat(core): setup game loop, map grid, player movement & basic pickup/drop`*
 
 ### 📌 Milestone 2: 切料與炭火烤肉狀態機
-- [ ] 實作食材箱生成（肉片、蔬菜、吐司）。
-- [ ] 實作切菜台互動與長按進度條。
-- [ ] 實作炭火烤爐（烤肉進度條、生肉 $\rightarrow$ 完美熟 $\rightarrow$ 燒焦狀態機轉換、火花粒子）。
+- [x] 實作食材箱生成（肉片、蔬菜、吐司）。
+- [x] 實作切菜台互動與長按進度條。
+- [x] 實作炭火烤爐（烤肉進度條、生肉 $\rightarrow$ 完美熟 $\rightarrow$ 燒焦狀態機轉換、火花粒子）。
 - *Commit: `feat(kitchen): add prep cutting station & bbq grill state machine`*
 
 ### 📌 Milestone 3: 裝盤、訂單系統、出餐與洗碗循環
-- [ ] 實作餐盤系統（食材放入盤中組裝、多重食材配方判定）。
-- [ ] 實作訂單生成器與倒數計時 UI（動態訂單卡片、耐性條、出餐判定）。
-- [ ] 實作髒盤回收與水槽洗碗循環。
-- [ ] 實作計分、連擊（Combo）與遊戲局數倒數結算畫面。
+- [x] 實作餐盤系統（食材放入盤中組裝、多重食材配方判定）。
+- [x] 實作訂單生成器與倒數計時 UI（動態訂單卡片、耐性條、出餐判定）。
+- [x] 實作髒盤回收與水槽洗碗循環。
+- [x] 實作計分、連擊（Combo）與遊戲局數倒數結算畫面。
 - *Commit: `feat(gameplay): implement plate assembly, orders, dirty dish cycle & scoring`*
 
 ### 📌 Milestone 4: 視聽覺饗宴（Web Audio 音效與中秋美學特效）
-- [ ] 導入 Web Audio API 合成音效（烤肉滋滋聲、切菜聲、洗碗水流、訂單完成慶祝音）。
-- [ ] 視覺特效：炭火微粒、烹飪油煙、燒焦警報閃爍、滿意顧客飄心動畫。
-- [ ] 中秋月宮主題 UI/HUD（古典金與現代霓虹融合美學、雙人模式切換）。
+- [x] 導入 Web Audio API 合成音效（烤肉滋滋聲、切菜聲、洗碗水流、訂單完成慶祝音）。
+- [x] 視覺特效：炭火微粒、烹飪油煙、燒焦警報閃爍、滿意顧客飄心動畫。
+- [x] 中秋月宮主題 UI/HUD（古典金與現代霓虹融合美學、雙人模式切換）。
 - *Commit: `feat(audio-fx): integrate procedural web audio and festive visual effects`*
 
 ### 📌 Milestone 5: 玩家註冊登入與排行榜系統
-- [ ] 實作玩家狀態模組（訪客模式、註冊、登入、LocalStorage 持久化）。
-- [ ] 實作排行榜彈窗（今日榜、總榜、個人歷史紀錄、結算自動上榜）。
+- [x] 實作玩家狀態模組（訪客模式、註冊、登入、LocalStorage 持久化）。
+- [x] 實作排行榜彈窗（今日榜、總榜、個人歷史紀錄、結算自動上榜）。
 - *Commit: `feat(auth-leaderboard): add player registration, login, and high score leaderboard`*
 
 ### 📌 Milestone 6: 雙人合作模式與行動端適配
-- [ ] 實作雙人鍵盤控制與雙角色物理碰撞互讓。
-- [ ] 實作 H5 行動端觸控虛擬搖桿與雙按鍵。
-- [ ] 撰寫完整 README.md 與 RETROSPECTIVE.md。
+- [x] 實作雙人鍵盤控制與雙角色物理碰撞互讓。
+- [x] 實作開局 1P / 2P 模式選擇與隨時切換機制。
+- [x] 實作 H5 行動端觸控虛擬搖桿與雙按鍵。
+- [x] 撰寫完整 README.md 與 RETROSPECTIVE.md。
 - *Commit: `feat(co-op-mobile): add 2-player local co-op and mobile touch controls`*
 
 ---

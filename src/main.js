@@ -91,17 +91,41 @@ class App {
     });
   }
 
+  setGameMode(is2P) {
+    this.is2PMode = is2P;
+    this.inputManager.is2PMode = is2P;
+    this.gameWorld.set2PMode(is2P);
+
+    if (this.modeToggleBtn) {
+      this.modeToggleBtn.textContent = this.is2PMode ? '👥 2P 雙人' : '👥 1P 單人';
+    }
+
+    const card1P = document.getElementById('mode-select-1p');
+    const card2P = document.getElementById('mode-select-2p');
+    if (card1P && card2P) {
+      if (this.is2PMode) {
+        card1P.classList.remove('active');
+        card2P.classList.add('active');
+        const badge1P = card1P.querySelector('.mode-badge');
+        const badge2P = card2P.querySelector('.mode-badge');
+        if (badge1P) badge1P.textContent = '切換';
+        if (badge2P) badge2P.textContent = '已選擇';
+      } else {
+        card2P.classList.remove('active');
+        card1P.classList.add('active');
+        const badge1P = card1P.querySelector('.mode-badge');
+        const badge2P = card2P.querySelector('.mode-badge');
+        if (badge1P) badge1P.textContent = '已選擇';
+        if (badge2P) badge2P.textContent = '切換';
+      }
+    }
+
+    this.updateHelperBar();
+  }
+
   initModeToggle() {
     this.modeToggleBtn?.addEventListener('click', () => {
-      this.is2PMode = !this.is2PMode;
-      this.inputManager.is2PMode = this.is2PMode;
-      this.gameWorld.set2PMode(this.is2PMode);
-      
-      if (this.modeToggleBtn) {
-        this.modeToggleBtn.textContent = this.is2PMode ? '👥 2P 雙人' : '👥 1P 單人';
-      }
-
-      this.updateHelperBar();
+      this.setGameMode(!this.is2PMode);
       this.gameWorld.soundManager.playPickup();
     });
   }
@@ -130,15 +154,29 @@ class App {
     const closeModal = () => {
       this.tutorialModal?.classList.add('hidden');
       this.isPausedForModal = false;
+      this.inputManager.reset();
       this.lastTime = performance.now();
       this.gameWorld.soundManager.playPickup();
+      this.canvas?.focus();
     };
 
     const openModal = () => {
       this.tutorialModal?.classList.remove('hidden');
       this.isPausedForModal = true;
+      this.inputManager.reset();
       this.gameWorld.soundManager.playDrop();
     };
+
+    const card1P = document.getElementById('mode-select-1p');
+    const card2P = document.getElementById('mode-select-2p');
+    card1P?.addEventListener('click', () => {
+      this.setGameMode(false);
+      this.gameWorld.soundManager.playPickup();
+    });
+    card2P?.addEventListener('click', () => {
+      this.setGameMode(true);
+      this.gameWorld.soundManager.playPickup();
+    });
 
     this.tutorialStartBtn?.addEventListener('click', closeModal);
     this.tutorialCloseBtn?.addEventListener('click', closeModal);
@@ -325,24 +363,40 @@ class App {
 
   initGlobalShortcuts() {
     window.addEventListener('keydown', (e) => {
-      // Toggle or Close Cookbook modal with H, R, Space, Enter, Escape
       const isTutorialOpen = !this.tutorialModal?.classList.contains('hidden');
 
+      // Allow 1 / 2 key to switch mode during modal or game
+      if (e.code === 'Digit1' || e.code === 'Numpad1') {
+        this.setGameMode(false);
+        this.gameWorld.soundManager.playPickup();
+      } else if (e.code === 'Digit2' || e.code === 'Numpad2') {
+        this.setGameMode(true);
+        this.gameWorld.soundManager.playPickup();
+      }
+
+      // Toggle or Close Cookbook modal with H, R, Space, Enter, Escape
       if (e.code === 'KeyH' || e.code === 'KeyR') {
         if (isTutorialOpen) {
           this.tutorialModal?.classList.add('hidden');
           this.isPausedForModal = false;
+          this.inputManager.reset();
+          this.lastTime = performance.now();
+          this.gameWorld.soundManager.playPickup();
+          this.canvas?.focus();
         } else {
           this.tutorialModal?.classList.remove('hidden');
           this.isPausedForModal = true;
+          this.inputManager.reset();
           this.gameWorld.soundManager.playDrop();
         }
       } else if (isTutorialOpen && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
         e.preventDefault();
         this.tutorialModal?.classList.add('hidden');
         this.isPausedForModal = false;
+        this.inputManager.reset();
         this.lastTime = performance.now();
         this.gameWorld.soundManager.playPickup();
+        this.canvas?.focus();
       }
     });
   }
