@@ -129,6 +129,10 @@ export class InputManager {
     });
   }
 
+  getThrowCharge() {
+    return this.getP1ThrowCharge();
+  }
+
   getP1ThrowCharge() {
     if (!this.p1IsPickupHeld) return 0;
     const hold = performance.now() - this.p1PickupPressTime;

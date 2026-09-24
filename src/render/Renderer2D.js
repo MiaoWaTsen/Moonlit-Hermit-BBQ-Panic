@@ -45,7 +45,9 @@ export class Renderer2D {
       this.renderPlayer(player);
       // Draw Throw Trajectory if charging throw
       if (inputManager) {
-        const charge = inputManager.getThrowCharge();
+        const charge = player.id === 'p2'
+          ? (typeof inputManager.getP2ThrowCharge === 'function' ? inputManager.getP2ThrowCharge() : 0)
+          : (typeof inputManager.getP1ThrowCharge === 'function' ? inputManager.getP1ThrowCharge() : 0);
         if (charge > 0 && player.heldItem) {
           this.renderThrowTrajectory(player, charge);
         }
@@ -472,9 +474,31 @@ export class Renderer2D {
     ctx.arc(ax, ay, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3. Held Item
+    // 3. Player Indicator Badge
+    ctx.save();
+    ctx.font = 'bold 10px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const tagText = player.id === 'p2' ? '2P 🪓 吳剛' : '1P 🐰 玉兔';
+    const tagBg = player.id === 'p2' ? 'rgba(46, 125, 50, 0.85)' : 'rgba(211, 47, 47, 0.85)';
+    const textWidth = ctx.measureText(tagText).width;
+    const badgeY = cy - player.radius - (player.heldItem ? 38 : 14);
+
+    ctx.fillStyle = tagBg;
+    ctx.beginPath();
+    ctx.roundRect(cx - textWidth / 2 - 4, badgeY - 7, textWidth + 8, 14, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(tagText, cx, badgeY + 1);
+    ctx.restore();
+
+    // 4. Held Item
     if (player.heldItem) {
-      this.drawItem(ctx, cx, cy - player.radius - 20, player.heldItem, 1.1);
+      this.drawItem(ctx, cx, cy - player.radius - 18, player.heldItem, 1.1);
     }
 
     ctx.restore();
