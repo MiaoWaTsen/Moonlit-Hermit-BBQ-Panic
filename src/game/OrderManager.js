@@ -102,18 +102,27 @@ export class OrderManager {
     }
   }
 
+  // Normalize ingredients for robust recipe matching
+  normalizeItemType(type) {
+    if (type === ITEM_TYPES.TOAST || type === ITEM_TYPES.COOKED_TOAST) return 'BREAD';
+    if (type === ITEM_TYPES.COOKED_BEEF) return 'BEEF';
+    if (type === ITEM_TYPES.COOKED_VEGGIE) return 'VEGGIE';
+    return type;
+  }
+
   // Check if a served plate matches any active order
   matchAndServe(plateItem) {
     if (!plateItem.isPlate() || plateItem.ingredients.length === 0) return null;
 
-    const plateIngredients = [...plateItem.ingredients].sort();
+    const normalizedPlate = plateItem.ingredients.map(t => this.normalizeItemType(t)).sort();
 
     for (let i = 0; i < this.activeOrders.length; i++) {
       const order = this.activeOrders[i];
-      const req = [...order.recipe.required].sort();
+      const normalizedReq = order.recipe.required.map(t => this.normalizeItemType(t)).sort();
 
-      if (req.length === plateIngredients.length && req.every((val, idx) => val === plateIngredients[idx])) {
-        // Matched! Remove order and return reward details
+      if (normalizedReq.length === normalizedPlate.length && 
+          normalizedReq.every((val, idx) => val === normalizedPlate[idx])) {
+        
         const timeRatio = order.getProgress();
         const basePoints = order.recipe.points;
         const tip = timeRatio > 0.5 ? Math.floor(basePoints * 0.3) : 0;

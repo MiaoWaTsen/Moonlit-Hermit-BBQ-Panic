@@ -630,6 +630,86 @@ html, body {
   line-height: 1.4;
 }
 
+/* Visual Pipelines Flowchart */
+.pipelines-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pipeline-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pipeline-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flow-node {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.flow-node.highlight-node {
+  background: rgba(245, 176, 65, 0.18);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-glow);
+}
+
+.node-icon {
+  font-size: 1.1rem;
+}
+
+.node-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.action-tag {
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #ffecb3;
+  font-size: 0.7rem;
+}
+
+.flow-hint {
+  font-size: 0.7rem;
+  color: #9bb0d3;
+  font-style: italic;
+}
+
 /* Recipes Grid */
 .recipes-grid {
   display: grid;
