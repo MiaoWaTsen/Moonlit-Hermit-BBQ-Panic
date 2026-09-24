@@ -1,27 +1,27 @@
 /**
  * Game Global Constants & Enums
+ * Compact Cozy Kitchen Dimensions for optimal single-player flow
  */
 
-export const TILE_SIZE = 56;
-export const MAP_COLS = 16;
-export const MAP_ROWS = 10;
+export const TILE_SIZE = 60;
+export const MAP_COLS = 13;
+export const MAP_ROWS = 8;
 
-export const CANVAS_WIDTH = MAP_COLS * TILE_SIZE; // 896px
-export const CANVAS_HEIGHT = MAP_ROWS * TILE_SIZE; // 560px
+export const CANVAS_WIDTH = MAP_COLS * TILE_SIZE; // 780px
+export const CANVAS_HEIGHT = MAP_ROWS * TILE_SIZE; // 480px
 
 export const TILE_TYPES = {
   FLOOR: 'FLOOR',
   WALL: 'WALL',
-  COUNTER: 'COUNTER',            // Normal empty countertop for placing items
+  COUNTER: 'COUNTER',
   CRATE_BEEF: 'CRATE_BEEF',      // Supplies raw beef
-  CRATE_VEGGIE: 'CRATE_VEGGIE',  // Supplies green pepper/veggie
+  CRATE_VEGGIE: 'CRATE_VEGGIE',  // Supplies green pepper
   CRATE_TOAST: 'CRATE_TOAST',    // Supplies toast bread
   CUTTING_BOARD: 'CUTTING_BOARD',// Prep/chopping station
   GRILL: 'GRILL',                // BBQ Charcoal grill
-  PLATE_STACK: 'PLATE_STACK',    // Clean plates
   SINK: 'SINK',                  // Washing dirty dishes
   DELIVERY: 'DELIVERY',          // Serving food
-  TRASH: 'TRASH'                 // Trash bin for burnt/wrong items
+  TRASH: 'TRASH'                 // Trash bin
 };
 
 export const DIRECTIONS = {

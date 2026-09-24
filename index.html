@@ -86,23 +86,22 @@
       <div class="key-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動</div>
       <div class="key-hint"><kbd>Space</kbd> 拿放 (短按) / 前拋 (長按)</div>
       <div class="key-hint"><kbd>E</kbd> 備料切菜 / 水槽洗碗</div>
-      <div class="key-hint"><kbd>📖</kbd> 隨時查看食譜</div>
+      <div class="key-hint"><kbd>H</kbd> 或 <kbd>R</kbd> 查看食譜</div>
       <div class="key-hint mode-indicator" id="game-mode-indicator">1P 單人修練模式</div>
     </footer>
 
-    <!-- Tutorial & Recipe Guidebook Modal Overlay -->
+    <!-- 1. Tutorial & Recipe Guidebook Modal Overlay -->
     <div id="tutorial-modal" class="modal-backdrop">
       <div class="modal-card cookbook-card glass-panel">
         <div class="modal-header">
           <div class="modal-title">
             <span class="modal-icon">📖</span>
-            <h2>月宮大廚修練手冊 <small>中秋烤肉必勝指南</small></h2>
+            <h2>月宮大廚修練手冊 <small>中秋烤肉必勝指南 (按 H 或 R 可隨時查看)</small></h2>
           </div>
           <button id="btn-tutorial-close" class="modal-close-btn">&times;</button>
         </div>
 
         <div class="modal-body">
-          <!-- Section 1: Cooking Loop Steps -->
           <div class="guide-section">
             <h3 class="section-title">廚房核心操作流程</h3>
             <div class="steps-grid">
@@ -145,7 +144,6 @@
             </div>
           </div>
 
-          <!-- Section 2: Recipe Book -->
           <div class="guide-section">
             <h3 class="section-title">四大中秋經典食譜</h3>
             <div class="recipes-grid">
@@ -190,6 +188,106 @@
 
         <div class="modal-footer">
           <button id="btn-tutorial-start" class="btn-primary start-btn">開始修練 (Enter)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Player Auth Modal (Login / Register / Guest) -->
+    <div id="auth-modal" class="modal-backdrop hidden">
+      <div class="modal-card auth-card glass-panel">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span class="modal-icon">👤</span>
+            <h2>月宮大廚身份登錄</h2>
+          </div>
+          <button id="btn-auth-close" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body auth-body">
+          <div class="auth-tabs">
+            <button class="auth-tab-btn active" data-tab="login">大廚登入</button>
+            <button class="auth-tab-btn" data-tab="register">新廚註冊</button>
+            <button class="auth-tab-btn" data-tab="guest">訪客快速玩</button>
+          </div>
+
+          <form id="auth-form" class="auth-form">
+            <div class="form-group" id="group-username">
+              <label for="auth-username">大廚暱稱 / 帳號</label>
+              <input type="text" id="auth-username" placeholder="請輸入 2~12 字大廚名稱" required autocomplete="username">
+            </div>
+            <div class="form-group" id="group-password">
+              <label for="auth-password">密碼</label>
+              <input type="password" id="auth-password" placeholder="請輸入至少 4 碼密碼" autocomplete="current-password">
+            </div>
+            <div id="auth-msg" class="auth-msg hidden"></div>
+            <button type="submit" id="btn-auth-submit" class="btn-primary full-btn">登入月宮廚房</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal-backdrop hidden">
+      <div class="modal-card leaderboard-card glass-panel">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span class="modal-icon">🏆</span>
+            <h2>中秋廚神天梯榜 <small>月宮最高榮譽</small></h2>
+          </div>
+          <button id="btn-leaderboard-close" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="leaderboard-table-wrapper">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>大廚暱稱</th>
+                  <th>總得分</th>
+                  <th>最高連擊</th>
+                  <th>挑戰日期</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-tbody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-leaderboard-confirm" class="btn-primary">返回廚房</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Game Over Settlement Modal -->
+    <div id="gameover-modal" class="modal-backdrop hidden">
+      <div class="modal-card gameover-card glass-panel">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span class="modal-icon">🌕</span>
+            <h2>中秋狂歡宴結算 <small>廚藝評級</small></h2>
+          </div>
+        </div>
+        <div class="modal-body gameover-body">
+          <div class="settle-badge" id="settle-title">🎉 米其林月宮烤肉仙</div>
+          <div class="settle-score-box">
+            <span class="score-label">本局最終得分</span>
+            <span class="score-number" id="settle-score">0</span>
+          </div>
+          <div class="settle-stats-row">
+            <div class="settle-stat">
+              <span class="stat-lbl">完成出餐</span>
+              <span class="stat-num" id="settle-dishes">0 份</span>
+            </div>
+            <div class="settle-stat">
+              <span class="stat-lbl">最高連擊</span>
+              <span class="stat-num" id="settle-combo">x1.0</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer dual-footer">
+          <button id="btn-settle-restart" class="btn-primary">再挑戰一局 🔄</button>
+          <button id="btn-settle-view-leaderboard" class="btn-secondary">查看排行榜 🏆</button>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 /**
  * MapGrid: Manages 2D grid tiles, station types, and stationary items on counters
+ * Compact 13x8 Cozy Layout: Halves travel distance for smooth high-efficiency play
  */
 
 import { MAP_COLS, MAP_ROWS, TILE_TYPES, ITEM_TYPES } from '../core/Constants.js';
@@ -17,23 +18,21 @@ export class MapGrid {
   }
 
   initMap() {
-    // 16 cols x 10 rows map layout
+    // 13 cols x 8 rows map layout
     // Legend:
     // W = WALL, F = FLOOR, C = COUNTER
     // B = CRATE_BEEF, V = CRATE_VEGGIE, T = CRATE_TOAST
     // K = CUTTING_BOARD, G = GRILL
     // S = SINK, D = DELIVERY, X = TRASH
     const mapLayout = [
-      ['W', 'D', 'D', 'C', 'C', 'C', 'C', 'K', 'K', 'C', 'K', 'K', 'C', 'X', 'X', 'W'],
-      ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
-      ['B', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'T'],
-      ['B', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'T'],
-      ['W', 'F', 'F', 'F', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'F', 'F', 'F', 'F', 'W'],
-      ['V', 'F', 'F', 'F', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'F', 'F', 'F', 'F', 'T'],
-      ['V', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
-      ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
-      ['W', 'G', 'G', 'G', 'C', 'S', 'S', 'C', 'S', 'S', 'C', 'G', 'G', 'G', 'C', 'W'],
-      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
+      ['W', 'D', 'D', 'C', 'C', 'C', 'K', 'K', 'C', 'K', 'C', 'X', 'W'],
+      ['W', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
+      ['B', 'F', 'F', 'F', 'C', 'C', 'C', 'C', 'F', 'F', 'F', 'F', 'T'],
+      ['B', 'F', 'F', 'F', 'C', 'C', 'C', 'C', 'F', 'F', 'F', 'F', 'T'],
+      ['V', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'T'],
+      ['V', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'W'],
+      ['W', 'G', 'G', 'G', 'C', 'S', 'S', 'C', 'G', 'G', 'G', 'C', 'W'],
+      ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
     ];
 
     const typeMapping = {
@@ -61,7 +60,7 @@ export class MapGrid {
       this.grid.push(row);
     }
 
-    // Initialize exactly TWO clean plates on upper counters
+    // Place the 2 clean plates on convenient upper center counters
     this.setItemAt(4, 0, Item.create(ITEM_TYPES.PLATE));
     this.setItemAt(5, 0, Item.create(ITEM_TYPES.PLATE));
   }
@@ -102,11 +101,10 @@ export class MapGrid {
 
   advanceWash(gridX, gridY, dt) {
     const current = this.getWashProgress(gridX, gridY);
-    const updated = Math.min(1.0, current + dt / 2.0); // 2 seconds to wash clean
+    const updated = Math.min(1.0, current + dt / 1.2); // Fast snappy washing in 1.2s
     this.washProgress.set(`${gridX},${gridY}`, updated);
     
     if (updated >= 1.0) {
-      // Washed clean! Transform to clean plate
       this.setItemAt(gridX, gridY, Item.create(ITEM_TYPES.PLATE));
       this.washProgress.delete(`${gridX},${gridY}`);
       return true;
