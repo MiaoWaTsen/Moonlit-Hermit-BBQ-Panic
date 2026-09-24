@@ -772,6 +772,9 @@ class App {
 
     for (const order of activeOrders) {
       let card = document.getElementById(order.id);
+      const secsRemaining = Math.max(0, Math.ceil(order.timeRemaining));
+      const pct = Math.max(0, Math.min(100, (order.timeRemaining / order.maxTime) * 100));
+
       if (!card) {
         card = document.createElement('div');
         card.className = 'order-card';
@@ -785,11 +788,14 @@ class App {
         }).join(' ');
 
         card.innerHTML = `
-          <div class="order-header">
-            <span>${order.recipe.icon} ${order.recipe.name}</span>
+          <div class="order-top-bar">
+            <span class="order-title-text">${order.recipe.icon} ${order.recipe.name}</span>
             <span class="order-pts">+${order.recipe.points}</span>
           </div>
-          <div class="order-ingredients">${ingredientBadges}</div>
+          <div class="order-mid-row">
+            <div class="order-ingredients">${ingredientBadges}</div>
+            <span class="order-timer-text" id="timer-text-${order.id}">⏱️ ${secsRemaining}s</span>
+          </div>
           <div class="order-timer-bar">
             <div class="order-timer-fill" id="timer-fill-${order.id}"></div>
           </div>
@@ -798,11 +804,24 @@ class App {
         this.renderedOrderIds.add(order.id);
       }
 
+      // Update remaining seconds badge
+      const timerText = document.getElementById(`timer-text-${order.id}`);
+      if (timerText) {
+        timerText.textContent = `⏱️ ${secsRemaining}s`;
+        if (secsRemaining <= 15) {
+          timerText.className = 'order-timer-text danger';
+        } else if (secsRemaining <= 30) {
+          timerText.className = 'order-timer-text warning';
+        } else {
+          timerText.className = 'order-timer-text';
+        }
+      }
+
+      // Update progress bar
       const fill = document.getElementById(`timer-fill-${order.id}`);
       if (fill) {
-        const pct = Math.max(0, Math.min(100, (order.timeRemaining / order.maxTime) * 100));
         fill.style.width = `${pct}%`;
-        fill.className = pct > 50 ? 'order-timer-fill' : pct > 25 ? 'order-timer-fill warning' : 'order-timer-fill danger';
+        fill.className = pct > 45 ? 'order-timer-fill' : pct > 20 ? 'order-timer-fill warning' : 'order-timer-fill danger';
       }
     }
   }

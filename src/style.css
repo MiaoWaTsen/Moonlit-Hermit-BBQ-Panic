@@ -136,10 +136,10 @@ html, body {
 /* Order Tickets Center Bar */
 .hud-center {
   flex: 1;
-  max-width: 50%;
-  margin: 0 1rem;
+  max-width: 52%;
+  margin: 0 0.75rem;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   scrollbar-width: none;
 }
 
@@ -151,26 +151,28 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  height: 54px;
+  min-height: 58px;
+  padding: 2px 0;
 }
 
 .order-placeholder {
   font-size: 0.85rem;
-  color: #6c7d9c;
+  color: #8da4c4;
   font-style: italic;
+  white-space: nowrap;
 }
 
 /* Order Card item styling */
 .order-card {
-  background: rgba(26, 36, 61, 0.95);
-  border: 1px solid rgba(255, 215, 0, 0.4);
+  background: rgba(20, 28, 50, 0.95);
+  border: 1px solid rgba(255, 215, 0, 0.45);
   border-radius: 8px;
-  padding: 4px 8px;
-  min-width: 140px;
+  padding: 4px 10px;
+  min-width: 155px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  gap: 3px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
   position: relative;
   animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -180,43 +182,89 @@ html, body {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.order-header {
+.order-top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
+}
+
+.order-title-text {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.order-pts {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--gold-bright);
+}
+
+.order-mid-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
 }
 
 .order-ingredients {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
-  font-size: 1rem;
+  font-size: 1.05rem;
+}
+
+.order-timer-text {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--green-leaf);
+  font-variant-numeric: tabular-nums;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.order-timer-text.warning {
+  color: #f39c12;
+  border-color: rgba(243, 156, 18, 0.4);
+}
+
+.order-timer-text.danger {
+  color: var(--meat-red);
+  border-color: rgba(231, 76, 60, 0.5);
+  animation: blink 0.6s infinite;
 }
 
 .order-timer-bar {
   width: 100%;
-  height: 4px;
+  height: 5px;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
+  margin-top: 1px;
 }
 
 .order-timer-fill {
   height: 100%;
   background: var(--green-leaf);
   width: 100%;
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(46, 204, 113, 0.6);
   transition: width 0.2s linear, background-color 0.3s ease;
 }
 
 .order-timer-fill.warning {
   background: #f39c12;
+  box-shadow: 0 0 6px rgba(243, 156, 18, 0.6);
 }
 
 .order-timer-fill.danger {
   background: var(--meat-red);
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.8);
   animation: blink 0.5s infinite;
 }
 

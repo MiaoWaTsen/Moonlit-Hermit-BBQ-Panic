@@ -34,8 +34,10 @@ export class Renderer2D {
     // 1. Draw Map Floor and Walls
     this.renderMapBase(world.mapGrid);
 
-    // 2. Draw Station Highlights (Targeted by player)
-    this.renderTargetHighlight(world.player1);
+    // 2. Draw Station Highlights (Targeted by all active players)
+    for (const player of world.players) {
+      this.renderTargetHighlight(player);
+    }
 
     // 3. Draw Stations and Stationary Items
     this.renderStationsAndItems(world.mapGrid);
@@ -349,13 +351,25 @@ export class Renderer2D {
     const px = target.x * TILE_SIZE;
     const py = target.y * TILE_SIZE;
 
+    const isP2 = player.id === 'p2';
+    const color = isP2 ? '#00e5ff' : '#ffd700';
+    const glow = isP2 ? 'rgba(0, 229, 255, 0.85)' : 'rgba(255, 215, 0, 0.85)';
+
     const ctx = this.ctx;
     ctx.save();
-    ctx.strokeStyle = '#ffd700';
+    ctx.strokeStyle = color;
     ctx.lineWidth = 2.5;
-    ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+    ctx.shadowColor = glow;
     ctx.shadowBlur = 8;
     ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+    // Player ID corner indicator
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(px + TILE_SIZE - 7, py + 7, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
